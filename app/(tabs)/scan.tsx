@@ -204,7 +204,11 @@ export default function ScanScreen() {
   };
 
   const takePhotoForOCR = async () => {
-    if (!permission?.granted) { requestPermission(); return; }
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('Se requiere acceso a la cámara', 'error');
+      return;
+    }
     const result = await ImagePicker.launchCameraAsync({
       base64: true, quality: 0.7,
     });

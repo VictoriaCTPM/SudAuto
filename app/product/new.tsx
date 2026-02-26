@@ -54,6 +54,11 @@ export default function NewProductScreen() {
   };
 
   const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('Se requiere acceso a la cámara', 'error');
+      return;
+    }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
     if (!result.canceled && result.assets[0]) setPhotoUri(result.assets[0].uri);
   };
