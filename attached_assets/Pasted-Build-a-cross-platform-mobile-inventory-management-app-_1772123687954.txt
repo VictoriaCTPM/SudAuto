@@ -1,0 +1,86 @@
+Build a cross-platform mobile inventory management app (Android & iOS) using React Native with Expo.
+Tech Stack:
+	∙	React Native + Expo (managed workflow)
+	∙	expo-camera for photos and barcode scanning
+	∙	Google Cloud Vision API for OCR text recognition from product labels
+	∙	Supabase as backend (PostgreSQL database + auth + cloud storage for photos)
+	∙	Local cache with expo-sqlite for offline capability
+	∙	xlsx library for Excel export
+	∙	expo-print for PDF report generation
+	∙	recharts or victory-native for sales charts
+1. Product Registration via Camera & OCR:
+	∙	User takes a photo of a product label or box
+	∙	Photo is sent to Google Cloud Vision API for text recognition
+	∙	App parses OCR results and auto-fills: Product Name, Brand, Serial Number/Barcode
+	∙	User reviews and manually corrects any field before saving
+	∙	Additional fields for manual input: Category (dropdown with custom categories), Net Price (Netto), Gross Price (Brutto), Quantity, Supplier name (optional), Notes
+	∙	The original photo is stored and linked to the product record
+	∙	Alternative input: barcode/QR code scanner that looks up existing products in the database or creates new entry
+2. Stock Management:
+	∙	Full product list with search by name, brand, serial number, or category
+	∙	Filter by category, price range, low stock (configurable threshold)
+	∙	Edit any product field inline or in detail view
+	∙	Delete product with confirmation dialog
+	∙	Adjust quantity with +/- buttons or manual number input
+	∙	Low stock alerts: highlight products below minimum threshold (user-configurable per product)
+	∙	Price history: track when netto/brutto prices were changed
+	∙	Export entire stock to Excel (.xlsx) with all fields including photo links
+	∙	Bulk actions: select multiple products for deletion or category assignment
+3. Daily Sales Workflow (“Work Day” screen):
+	∙	Start Day button that opens the daily workspace
+	∙	To register a sale: scan product (photo OCR or barcode) → app matches against existing stock → confirm sale
+	∙	If product not in stock, option to add it on the fly
+	∙	Input sale price: netto and brutto (can differ from stock purchase price for margin tracking)
+	∙	Sold quantity is automatically deducted from stock
+	∙	Real-time daily dashboard showing: list of items sold with individual prices, running total Netto revenue, running total Brutto revenue, profit margin per item (sale brutto minus purchase brutto), remaining stock count, items running low
+4. Order Tracking (Incoming Stock):
+	∙	“Order” tab to register products ordered for next day delivery
+	∙	Scan or manually add products to order list
+	∙	Fields: product name, brand, quantity ordered, expected netto and brutto cost, supplier, expected delivery date
+	∙	When order arrives: confirm receipt → items automatically added to stock with correct quantities
+	∙	Order history with status: Ordered → Received → Partially received
+5. End of Day Summary:
+	∙	“End Day” button generates comprehensive daily report:
+	∙	Total items sold (count) with full itemized list
+	∙	Total Netto revenue
+	∙	Total Brutto revenue
+	∙	Estimated profit (total sale brutto minus total purchase brutto)
+	∙	Total items ordered for next day with itemized list and expected cost
+	∙	Current stock snapshot (total items, total stock value)
+	∙	Comparison with previous day (more/less sold)
+	∙	Save report to history
+	∙	Export daily report as PDF (for sending to partner/accountant)
+	∙	Export daily report as Excel
+6. Analytics & Reports:
+	∙	Weekly and monthly sales charts (bar chart of daily revenue)
+	∙	Top selling products ranking
+	∙	Stock value over time
+	∙	Profit margins by product and category
+	∙	Export any report period to Excel or PDF
+	∙	History of all past daily reports, browsable by date
+7. Data & Sync:
+	∙	Supabase backend: all data synced to cloud in real-time
+	∙	Photos stored in Supabase Storage
+	∙	Offline mode: app works without internet using local SQLite cache, syncs when connection restored
+	∙	Multi-device support: use the app on phone and tablet with same account
+	∙	Automatic daily backup
+8. UI/UX Requirements:
+	∙	Bottom tab navigation: Stock, Scan (camera), Today (daily sales), Orders, Reports
+	∙	Modern clean UI, dark and light theme support
+	∙	Camera opens full screen with overlay guide for label positioning
+	∙	All lists: scrollable, pull-to-refresh, swipe-to-delete
+	∙	Confirmation dialogs for destructive actions
+	∙	Loading indicators for OCR processing and sync
+	∙	Toast notifications for successful actions
+	∙	Floating action button on Stock and Today screens for quick add
+9. Authentication:
+	∙	Simple email/password auth via Supabase Auth
+	∙	Optional PIN lock for app access
+	∙	Data isolated per user account
+Google Cloud Vision API Integration Details:
+	∙	Use TEXT_DETECTION feature for label OCR
+	∙	Send photo as base64 to Vision API endpoint
+	∙	Parse response to extract structured text blocks
+	∙	Use heuristics to identify which text blocks map to product name, brand, serial number (by position, font size hints, common patterns)
+	∙	Store raw OCR result for debugging
+	∙	Handle API errors gracefully with fallback to manual entry
