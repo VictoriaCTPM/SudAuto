@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface User {
@@ -17,6 +17,16 @@ interface AuthContextValue {
 }
 
 const AUTH_KEY = '@stockpilot:auth';
+const USERS_KEY = '@stockpilot:users';
+
+function safeParse<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -25,29 +35,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(AUTH_KEY).then((raw) => {
-      if (raw) {
-        try {
-          setUser(JSON.parse(raw));
-        } catch {}
-      }
-      setIsLoading(false);
-    });
+    AsyncStorage.getItem(AUTH_KEY)
+      .then((raw) => {
+        setUser(safeParse<User | null>(raw, null));
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const usersRaw = await AsyncStorage.getItem('@stockpilot:users');
-    const users: Array<User & { password: string }> = usersRaw ? JSON.parse(usersRaw) : [];
+  const login = useCallback(async (email: string, password: string) => {
+    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
+    const users = safeParse<Array<User & { password: string }>>(usersRaw, []);
     const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
     if (!found) throw new Error('Invalid email or password');
     const { password: _pw, ...u } = found;
     await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(u));
     setUser(u);
-  };
+  }, []);
 
-  const register = async (email: string, password: string, name: string) => {
-    const usersRaw = await AsyncStorage.getItem('@stockpilot:users');
-    const users: Array<User & { password: string }> = usersRaw ? JSON.parse(usersRaw) : [];
+  const register = useCallback(async (email: string, password: string, name: string) => {
+    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
+    const users = safeParse<Array<User & { password: string }>>(usersRaw, []);
     if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
       throw new Error('An account with this email already exists');
     }
@@ -59,20 +67,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     };
     users.push(newUser);
-    await AsyncStorage.setItem('@stockpilot:users', JSON.stringify(users));
+    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
     const { password: _pw, ...u } = newUser;
     await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(u));
     setUser(u);
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await AsyncStorage.removeItem(AUTH_KEY);
     setUser(null);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({ user, isLoading, login, register, logout }),
-    [user, isLoading]
+    [user, isLoading, login, register, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

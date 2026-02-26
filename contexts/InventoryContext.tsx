@@ -163,14 +163,13 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(KEYS.REPORTS),
       AsyncStorage.getItem(KEYS.CATEGORIES),
     ]).then(([p, w, s, o, r, c]) => {
-      if (p) setProducts(JSON.parse(p));
-      if (w) setWorkdays(JSON.parse(w));
-      if (s) setSales(JSON.parse(s));
-      if (o) setOrders(JSON.parse(o));
-      if (r) setReports(JSON.parse(r));
-      if (c) setCategories(JSON.parse(c));
-      setIsLoading(false);
-    });
+      try { if (p) setProducts(JSON.parse(p)); } catch {}
+      try { if (w) setWorkdays(JSON.parse(w)); } catch {}
+      try { if (s) setSales(JSON.parse(s)); } catch {}
+      try { if (o) setOrders(JSON.parse(o)); } catch {}
+      try { if (r) setReports(JSON.parse(r)); } catch {}
+      try { if (c) setCategories(JSON.parse(c)); } catch {}
+    }).catch(() => {}).finally(() => setIsLoading(false));
   }, []);
 
   const saveProducts = useCallback(async (data: Product[]) => {

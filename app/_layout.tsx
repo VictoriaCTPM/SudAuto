@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -16,14 +16,21 @@ SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
+  const hasBootstrapped = useRef(false);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (isLoading) return;
+    if (!hasBootstrapped.current) {
+      hasBootstrapped.current = true;
       if (user) {
         router.replace('/(tabs)');
       } else {
         router.replace('/(auth)/login');
       }
+      return;
+    }
+    if (!user) {
+      router.replace('/(auth)/login');
     }
   }, [user, isLoading]);
 

@@ -4,7 +4,7 @@
 A cross-platform mobile inventory management app built with React Native + Expo (managed workflow). Full-featured stock, sales, orders, and analytics management.
 
 ## Tech Stack
-- **Frontend**: React Native + Expo (SDK 53), Expo Router (file-based routing)
+- **Frontend**: React Native + Expo (SDK 54), Expo Router (file-based routing)
 - **Backend**: Express.js (port 5000) — minimal, serves landing page + API
 - **Persistence**: AsyncStorage (local, per-device)
 - **State**: React Context (AuthContext, InventoryContext) + React Query
