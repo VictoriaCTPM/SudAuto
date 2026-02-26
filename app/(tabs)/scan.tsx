@@ -14,7 +14,9 @@ import { useInventory } from '@/contexts/InventoryContext';
 import { useToast } from '@/components/Toast';
 import * as Haptics from 'expo-haptics';
 
-const VISION_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_VISION_API_KEY || '';
+const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+  : 'http://localhost:5000';
 
 interface OCRFields {
   name: string;
@@ -26,80 +28,15 @@ interface OCRFields {
 }
 
 async function runOCR(base64: string): Promise<OCRFields> {
-  if (!VISION_API_KEY) {
-    return { name: '', brand: '', serial: '', barcode: '', price: '', rawText: '' };
-  }
-  const body = {
-    requests: [{ image: { content: base64 }, features: [{ type: 'TEXT_DETECTION', maxResults: 1 }] }],
-  };
-  const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${VISION_API_KEY}`, {
+  const res = await fetch(`${API_BASE}/api/ocr`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ base64 }),
   });
-  const json = await res.json();
-  const raw = json.responses?.[0]?.fullTextAnnotation?.text || '';
-  const lines = raw.split('\n').map((l: string) => l.trim()).filter(Boolean);
-
-  const barcodePattern = /\b(\d{8,14})\b/;
-  const serialPattern = /([A-Z0-9]{6,20})/;
-  const pricePattern = /\$?\s?(\d+[.,]\d{2})/;
-  const brandKeywords = ['by ', 'brand:', 'marca:', 'manufactured by', 'fabricado por', 'hecho por'];
-  const serialKeywords = ['s/n', 'serial', 'serie', 'sku', 'ref', 'modelo', 'model', 'no.', 'nº', 'código', 'codigo', 'part', 'parte'];
-  const priceKeywords = ['precio', 'price', 'pvp', 'costo', 'cost', '$'];
-
-  let name = '';
-  let brand = '';
-  let serial = '';
-  let barcode = '';
-  let price = '';
-
-  for (const line of lines) {
-    const lo = line.toLowerCase();
-
-    if (!barcode) {
-      const bm = line.match(barcodePattern);
-      if (bm) barcode = bm[1];
-    }
-
-    if (!brand && brandKeywords.some((k) => lo.includes(k))) {
-      const cleaned = line.replace(/^(by|brand:|marca:|manufactured by|fabricado por|hecho por)\s*/i, '').trim();
-      brand = cleaned || line;
-    }
-
-    if (!serial) {
-      if (serialKeywords.some((k) => lo.includes(k))) {
-        const sm = line.match(serialPattern);
-        if (sm) serial = sm[1];
-        else {
-          const afterColon = line.split(/[:]\s*/);
-          if (afterColon.length > 1) serial = afterColon[afterColon.length - 1].trim();
-        }
-      } else {
-        const sm = line.match(serialPattern);
-        if (sm && sm[1].length >= 8) serial = sm[1];
-      }
-    }
-
-    if (!price) {
-      if (priceKeywords.some((k) => lo.includes(k))) {
-        const pm = line.match(pricePattern);
-        if (pm) price = pm[1].replace(',', '.');
-      }
-    }
+  if (!res.ok) {
+    throw new Error('OCR request failed');
   }
-
-  if (!price) {
-    for (const line of lines) {
-      const pm = line.match(pricePattern);
-      if (pm) { price = pm[1].replace(',', '.'); break; }
-    }
-  }
-
-  name = lines[0] || '';
-  if (!brand && lines.length > 1) brand = lines[1];
-
-  return { name, brand, serial, barcode, price, rawText: raw };
+  return await res.json();
 }
 
 function ScanResult({ data, onClose, theme }: { data: any; onClose: () => void; theme: any }) {
@@ -220,11 +157,6 @@ export default function ScanScreen() {
   const processOCR = async (base64: string, uri: string) => {
     setOcrLoading(true);
     try {
-      if (!VISION_API_KEY) {
-        showToast('Sin clave de Google Vision. Redirigiendo a entrada manual.', 'info');
-        router.push({ pathname: '/product/new', params: { photoUri: uri } });
-        return;
-      }
       const result = await runOCR(base64);
       setOcrResult({ ...result, photoUri: uri });
     } catch (e) {
@@ -319,14 +251,6 @@ export default function ScanScreen() {
             <Text style={[styles.ocrSub, { color: theme.textSecondary }]}>
               Toma o sube una foto de la etiqueta del producto. Se extraerán automáticamente el nombre, marca, código de barras y precio.
             </Text>
-            {!VISION_API_KEY && (
-              <View style={[styles.apiNotice, { backgroundColor: theme.warning + '18' }]}>
-                <Ionicons name="information-circle" size={16} color={theme.warning} />
-                <Text style={[styles.apiNoticeText, { color: theme.warning }]}>
-                  Configura EXPO_PUBLIC_GOOGLE_VISION_API_KEY para OCR. Sin ella, irás a la entrada manual.
-                </Text>
-              </View>
-            )}
           </View>
 
           {ocrLoading ? (
@@ -426,8 +350,6 @@ const styles = StyleSheet.create({
   ocrHero: { borderRadius: 20, borderWidth: 1, padding: 24, alignItems: 'center', gap: 12 },
   ocrTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', textAlign: 'center' },
   ocrSub: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20 },
-  apiNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 10, padding: 12, marginTop: 4 },
-  apiNoticeText: { fontSize: 12, fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18 },
   ocrLoading: { alignItems: 'center', gap: 16, paddingVertical: 40 },
   ocrLoadingText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
   ocrResultBox: { borderRadius: 18, borderWidth: 1, overflow: 'hidden' },

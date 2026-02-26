@@ -10,7 +10,7 @@ A cross-platform mobile inventory management app built with React Native + Expo 
 - **State**: React Context (AuthContext, InventoryContext) + React Query
 - **UI**: Inter font (@expo-google-fonts/inter), expo-blur, react-native-reanimated
 - **Camera**: expo-camera (barcode scanning), expo-image-picker (OCR photos)
-- **OCR**: Google Cloud Vision API (optional, set EXPO_PUBLIC_GOOGLE_VISION_API_KEY) — extracts name, brand, serial, barcode, price from product label photos
+- **OCR**: Gemini AI (via Replit AI Integrations) — server-side endpoint extracts name, brand, serial, barcode, price from product label photos
 - **Charts**: Custom SVG bar charts via react-native-svg
 
 ## App Structure
@@ -24,7 +24,7 @@ app/
   (tabs)/
     _layout.tsx        # 5-tab layout (NativeTabs iOS 26+ / Classic fallback)
     index.tsx          # Inventario — lista de productos, búsqueda, filtros, acciones masivas
-    scan.tsx           # Escáner de código de barras + OCR de etiquetas (Google Vision)
+    scan.tsx           # Escáner de código de barras + OCR de etiquetas (Gemini AI)
     today.tsx          # Hoy — jornada, registrar ventas, panel en tiempo real
     orders.tsx         # Pedidos — agregar/recibir stock entrante
     reports.tsx        # Informes — gráficos, productos más vendidos, historial de reportes
@@ -47,7 +47,7 @@ components/
 1. **Autenticación** — Correo/contraseña, almacenado localmente
 2. **Gestión de inventario** — CRUD, búsqueda, filtros por categoría, alertas de stock bajo, historial de precios, eliminación masiva
 3. **Escáner de código de barras** — Escaneo en tiempo real vía expo-camera
-4. **OCR** — Google Cloud Vision API extrae 5 campos de etiquetas: nombre, marca, serie, código de barras, precio
+4. **OCR** — Gemini AI extrae 5 campos de etiquetas: nombre, marca, serie, código de barras, precio (vía endpoint POST /api/ocr)
 5. **Jornada / Ventas** — Iniciar/finalizar día, registrar ventas, panel de P&L en tiempo real
 6. **Pedidos** — Rastrear stock entrante, confirmar recepción (actualiza inventario automáticamente)
 7. **Informes** — Gráficos semanales/mensuales de ingresos, productos más vendidos, historial de reportes diarios
@@ -56,7 +56,8 @@ components/
 Herramientas Manuales, Herramientas Eléctricas, Tornillería y Fijación, Pintura y Acabados, Plomería, Electricidad, Ferretería General, Accesorios Automotriz, Aceites y Lubricantes, Filtros y Refacciones, Llantas y Rines, Iluminación Vehicular, Baterías y Carga, Seguridad Industrial, Jardín y Exterior, Otro
 
 ## Environment Variables
-- `EXPO_PUBLIC_GOOGLE_VISION_API_KEY` — Optional; enables OCR from product photos
+- `AI_INTEGRATIONS_GEMINI_BASE_URL` — Auto-configured by Replit AI Integrations
+- `AI_INTEGRATIONS_GEMINI_API_KEY` — Auto-configured by Replit AI Integrations
 - `EXPO_PUBLIC_DOMAIN` — Set by Replit for API URL resolution
 
 ## Running the App
