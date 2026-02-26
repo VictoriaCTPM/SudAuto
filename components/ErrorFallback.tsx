@@ -46,7 +46,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   const formatErrorDetails = (): string => {
     let details = `Error: ${error.message}\n\n`;
     if (error.stack) {
-      details += `Stack Trace:\n${error.stack}`;
+      details += `Rastro de pila:\n${error.stack}`;
     }
     return details;
   };
@@ -62,7 +62,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       {__DEV__ ? (
         <Pressable
           onPress={() => setIsModalVisible(true)}
-          accessibilityLabel="View error details"
+          accessibilityLabel="Ver detalles del error"
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.topButton,
@@ -79,11 +79,11 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
 
       <View style={styles.content}>
         <Text style={[styles.title, { color: theme.text }]}>
-          Something went wrong
+          Algo salió mal
         </Text>
 
         <Text style={[styles.message, { color: theme.textSecondary }]}>
-          Please reload the app to continue.
+          Por favor recarga la app para continuar.
         </Text>
 
         <Pressable
@@ -98,7 +98,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           ]}
         >
           <Text style={[styles.buttonText, { color: theme.buttonText }]}>
-            Try Again
+            Intentar de nuevo
           </Text>
         </Pressable>
       </View>
@@ -128,11 +128,11 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 ]}
               >
                 <Text style={[styles.modalTitle, { color: theme.text }]}>
-                  Error Details
+                  Detalles del error
                 </Text>
                 <Pressable
                   onPress={() => setIsModalVisible(false)}
-                  accessibilityLabel="Close error details"
+                  accessibilityLabel="Cerrar detalles del error"
                   accessibilityRole="button"
                   style={({ pressed }) => [
                     styles.closeButton,

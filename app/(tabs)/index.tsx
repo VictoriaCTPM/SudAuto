@@ -12,7 +12,7 @@ import { useInventory, Product } from '@/contexts/InventoryContext';
 import { useToast } from '@/components/Toast';
 import * as Haptics from 'expo-haptics';
 
-const FILTERS = ['All', 'Low Stock', ...[] as string[]];
+const FILTERS = ['Todos', 'Stock bajo', ...[] as string[]];
 
 function StatBadge({ label, value, color, theme }: any) {
   return (
@@ -56,7 +56,7 @@ function ProductItem({ item, theme, onPress, selected, onLongPress }: {
             <Text style={[styles.cardName, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
             {isLow && (
               <View style={[styles.lowBadge, { backgroundColor: theme.danger + '22' }]}>
-                <Text style={[styles.lowText, { color: theme.danger }]}>Low</Text>
+                <Text style={[styles.lowText, { color: theme.danger }]}>Bajo</Text>
               </View>
             )}
           </View>
@@ -69,7 +69,7 @@ function ProductItem({ item, theme, onPress, selected, onLongPress }: {
             {item.grossPrice.toFixed(2)}
           </Text>
           <Text style={[styles.cardQty, { color: isLow ? theme.danger : theme.textSecondary }]}>
-            Qty: {item.quantity}
+            Cant: {item.quantity}
           </Text>
         </View>
       </View>
@@ -85,12 +85,12 @@ export default function StockScreen() {
   const { showToast } = useToast();
 
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState('Todos');
   const [activeCategory, setActiveCategory] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
 
-  const allFilters = useMemo(() => ['All', 'Low Stock', ...categories], [categories]);
+  const allFilters = useMemo(() => ['Todos', 'Stock bajo', ...categories], [categories]);
 
   const filtered = useMemo(() => {
     let list = products;
@@ -105,9 +105,9 @@ export default function StockScreen() {
           p.category.toLowerCase().includes(q)
       );
     }
-    if (activeFilter === 'Low Stock') {
+    if (activeFilter === 'Stock bajo') {
       list = list.filter((p) => p.quantity <= p.minQuantity);
-    } else if (activeFilter !== 'All') {
+    } else if (activeFilter !== 'Todos') {
       list = list.filter((p) => p.category === activeFilter);
     }
     return list;
@@ -126,13 +126,13 @@ export default function StockScreen() {
   }, []);
 
   const handleDeleteSelected = () => {
-    Alert.alert('Delete Products', `Delete ${selectedIds.size} product(s)?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('Eliminar productos', `¿Eliminar ${selectedIds.size} producto(s)?`, [
+      { text: 'Cancelar', style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive', onPress: async () => {
+        text: 'Eliminar', style: 'destructive', onPress: async () => {
           await deleteProducts(Array.from(selectedIds));
           setSelectedIds(new Set());
-          showToast(`Deleted ${selectedIds.size} product(s)`, 'success');
+          showToast(`${selectedIds.size} producto(s) eliminado(s)`, 'success');
         },
       },
     ]);
@@ -150,8 +150,8 @@ export default function StockScreen() {
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={[styles.screenTitle, { color: theme.text }]}>Stock</Text>
-            <Text style={[styles.screenSub, { color: theme.textSecondary }]}>{products.length} products</Text>
+            <Text style={[styles.screenTitle, { color: theme.text }]}>Inventario</Text>
+            <Text style={[styles.screenSub, { color: theme.textSecondary }]}>{products.length} productos</Text>
           </View>
           <View style={styles.headerActions}>
             {selectedIds.size > 0 && (
@@ -169,9 +169,9 @@ export default function StockScreen() {
         </View>
 
         <View style={styles.statsRow}>
-          <StatBadge label="Total Products" value={products.length} color={theme.text} theme={theme} />
-          <StatBadge label="Low Stock" value={lowStockCount} color={lowStockCount > 0 ? theme.danger : theme.success} theme={theme} />
-          <StatBadge label="Total Value" value={`$${totalValue >= 1000 ? (totalValue / 1000).toFixed(1) + 'k' : totalValue.toFixed(0)}`} color={theme.accent} theme={theme} />
+          <StatBadge label="Total productos" value={products.length} color={theme.text} theme={theme} />
+          <StatBadge label="Stock bajo" value={lowStockCount} color={lowStockCount > 0 ? theme.danger : theme.success} theme={theme} />
+          <StatBadge label="Valor total" value={`$${totalValue >= 1000 ? (totalValue / 1000).toFixed(1) + 'k' : totalValue.toFixed(0)}`} color={theme.accent} theme={theme} />
         </View>
 
         <View style={[styles.searchWrap, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
@@ -180,7 +180,7 @@ export default function StockScreen() {
             style={[styles.searchInput, { color: theme.text }]}
             value={search}
             onChangeText={setSearch}
-            placeholder="Search by name, brand, barcode..."
+            placeholder="Buscar por nombre, marca, código..."
             placeholderTextColor={theme.placeholder}
           />
           {search ? (
@@ -224,17 +224,17 @@ export default function StockScreen() {
           <View style={styles.empty}>
             <Ionicons name="cube-outline" size={52} color={theme.textTertiary} />
             <Text style={[styles.emptyTitle, { color: theme.text }]}>
-              {search ? 'No products found' : 'No products yet'}
+              {search ? 'No se encontraron productos' : 'Sin productos aún'}
             </Text>
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-              {search ? 'Try a different search' : 'Add your first product to get started'}
+              {search ? 'Intenta con otra búsqueda' : 'Agrega tu primer producto para comenzar'}
             </Text>
             {!search && (
               <Pressable
                 onPress={() => router.push('/product/new')}
                 style={[styles.emptyBtn, { backgroundColor: theme.accent }]}
               >
-                <Text style={styles.emptyBtnText}>Add Product</Text>
+                <Text style={styles.emptyBtnText}>Agregar producto</Text>
               </Pressable>
             )}
           </View>

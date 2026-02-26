@@ -13,23 +13,23 @@ function NativeTabLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: 'shippingbox', selected: 'shippingbox.fill' }} />
-        <Label>Stock</Label>
+        <Label>Inventario</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="scan">
         <Icon sf={{ default: 'barcode.viewfinder', selected: 'barcode.viewfinder' }} />
-        <Label>Scan</Label>
+        <Label>Escanear</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="today">
         <Icon sf={{ default: 'storefront', selected: 'storefront.fill' }} />
-        <Label>Today</Label>
+        <Label>Hoy</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="orders">
         <Icon sf={{ default: 'shippingbox.and.arrow.backward', selected: 'shippingbox.and.arrow.backward.fill' }} />
-        <Label>Orders</Label>
+        <Label>Pedidos</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="reports">
         <Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
-        <Label>Reports</Label>
+        <Label>Informes</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -68,7 +68,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Stock',
+          title: 'Inventario',
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="shippingbox.fill" tintColor={color} size={22} /> : <Ionicons name="cube" size={22} color={color} />,
         }}
@@ -76,7 +76,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="scan"
         options={{
-          title: 'Scan',
+          title: 'Escanear',
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="barcode.viewfinder" tintColor={color} size={22} /> : <Ionicons name="scan" size={22} color={color} />,
         }}
@@ -84,7 +84,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="today"
         options={{
-          title: 'Today',
+          title: 'Hoy',
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="storefront.fill" tintColor={color} size={22} /> : <Ionicons name="storefront" size={22} color={color} />,
         }}
@@ -92,7 +92,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: 'Orders',
+          title: 'Pedidos',
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="arrow.down.box.fill" tintColor={color} size={22} /> : <Ionicons name="git-pull-request" size={22} color={color} />,
         }}
@@ -100,7 +100,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
+          title: 'Informes',
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="chart.bar.fill" tintColor={color} size={22} /> : <Ionicons name="bar-chart" size={22} color={color} />,
         }}

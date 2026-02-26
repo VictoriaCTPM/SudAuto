@@ -16,9 +16,18 @@ import * as Haptics from 'expo-haptics';
 
 const VISION_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_VISION_API_KEY || '';
 
-async function runOCR(base64: string): Promise<{ name: string; brand: string; serial: string; rawText: string }> {
+interface OCRFields {
+  name: string;
+  brand: string;
+  serial: string;
+  barcode: string;
+  price: string;
+  rawText: string;
+}
+
+async function runOCR(base64: string): Promise<OCRFields> {
   if (!VISION_API_KEY) {
-    return { name: '', brand: '', serial: '', rawText: '' };
+    return { name: '', brand: '', serial: '', barcode: '', price: '', rawText: '' };
   }
   const body = {
     requests: [{ image: { content: base64 }, features: [{ type: 'TEXT_DETECTION', maxResults: 1 }] }],
@@ -31,19 +40,66 @@ async function runOCR(base64: string): Promise<{ name: string; brand: string; se
   const json = await res.json();
   const raw = json.responses?.[0]?.fullTextAnnotation?.text || '';
   const lines = raw.split('\n').map((l: string) => l.trim()).filter(Boolean);
+
+  const barcodePattern = /\b(\d{8,14})\b/;
   const serialPattern = /([A-Z0-9]{6,20})/;
-  const brandKeywords = ['by ', 'brand:', 'manufactured by'];
-  let name = lines[0] || '';
+  const pricePattern = /\$?\s?(\d+[.,]\d{2})/;
+  const brandKeywords = ['by ', 'brand:', 'marca:', 'manufactured by', 'fabricado por', 'hecho por'];
+  const serialKeywords = ['s/n', 'serial', 'serie', 'sku', 'ref', 'modelo', 'model', 'no.', 'nº', 'código', 'codigo', 'part', 'parte'];
+  const priceKeywords = ['precio', 'price', 'pvp', 'costo', 'cost', '$'];
+
+  let name = '';
   let brand = '';
   let serial = '';
+  let barcode = '';
+  let price = '';
+
   for (const line of lines) {
     const lo = line.toLowerCase();
-    if (brandKeywords.some((k) => lo.includes(k))) brand = line;
-    const sm = line.match(serialPattern);
-    if (sm && !serial) serial = sm[1];
+
+    if (!barcode) {
+      const bm = line.match(barcodePattern);
+      if (bm) barcode = bm[1];
+    }
+
+    if (!brand && brandKeywords.some((k) => lo.includes(k))) {
+      const cleaned = line.replace(/^(by|brand:|marca:|manufactured by|fabricado por|hecho por)\s*/i, '').trim();
+      brand = cleaned || line;
+    }
+
+    if (!serial) {
+      if (serialKeywords.some((k) => lo.includes(k))) {
+        const sm = line.match(serialPattern);
+        if (sm) serial = sm[1];
+        else {
+          const afterColon = line.split(/[:]\s*/);
+          if (afterColon.length > 1) serial = afterColon[afterColon.length - 1].trim();
+        }
+      } else {
+        const sm = line.match(serialPattern);
+        if (sm && sm[1].length >= 8) serial = sm[1];
+      }
+    }
+
+    if (!price) {
+      if (priceKeywords.some((k) => lo.includes(k))) {
+        const pm = line.match(pricePattern);
+        if (pm) price = pm[1].replace(',', '.');
+      }
+    }
   }
+
+  if (!price) {
+    for (const line of lines) {
+      const pm = line.match(pricePattern);
+      if (pm) { price = pm[1].replace(',', '.'); break; }
+    }
+  }
+
+  name = lines[0] || '';
   if (!brand && lines.length > 1) brand = lines[1];
-  return { name, brand, serial, rawText: raw };
+
+  return { name, brand, serial, barcode, price, rawText: raw };
 }
 
 function ScanResult({ data, onClose, theme }: { data: any; onClose: () => void; theme: any }) {
@@ -57,7 +113,7 @@ function ScanResult({ data, onClose, theme }: { data: any; onClose: () => void; 
           <Ionicons name={found ? 'checkmark-circle' : 'cube-outline'} size={24} color={found ? theme.success : theme.accent} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[scanStyles.resultTitle, { color: theme.text }]}>{found ? found.name : 'Product Not Found'}</Text>
+          <Text style={[scanStyles.resultTitle, { color: theme.text }]}>{found ? found.name : 'Producto no encontrado'}</Text>
           <Text style={[scanStyles.resultSub, { color: theme.textSecondary }]}>{data}</Text>
         </View>
         <Pressable onPress={onClose}>
@@ -67,13 +123,13 @@ function ScanResult({ data, onClose, theme }: { data: any; onClose: () => void; 
       {found && (
         <View style={scanStyles.resultDetails}>
           <Text style={[scanStyles.detailText, { color: theme.textSecondary }]}>
-            Brand: <Text style={{ color: theme.text }}>{found.brand}</Text>
+            Marca: <Text style={{ color: theme.text }}>{found.brand}</Text>
           </Text>
           <Text style={[scanStyles.detailText, { color: theme.textSecondary }]}>
-            In Stock: <Text style={{ color: found.quantity <= found.minQuantity ? theme.danger : theme.success }}>{found.quantity}</Text>
+            En stock: <Text style={{ color: found.quantity <= found.minQuantity ? theme.danger : theme.success }}>{found.quantity}</Text>
           </Text>
           <Text style={[scanStyles.detailText, { color: theme.textSecondary }]}>
-            Price: <Text style={{ color: theme.text }}>${found.grossPrice.toFixed(2)}</Text>
+            Precio: <Text style={{ color: theme.text }}>${found.grossPrice.toFixed(2)}</Text>
           </Text>
         </View>
       )}
@@ -83,14 +139,14 @@ function ScanResult({ data, onClose, theme }: { data: any; onClose: () => void; 
             onPress={() => { onClose(); router.push({ pathname: '/product/[id]', params: { id: found.id } }); }}
             style={[scanStyles.actionBtn, { backgroundColor: theme.accent }]}
           >
-            <Text style={scanStyles.actionBtnText}>View Product</Text>
+            <Text style={scanStyles.actionBtnText}>Ver producto</Text>
           </Pressable>
         ) : (
           <Pressable
             onPress={() => { onClose(); router.push({ pathname: '/product/new', params: { barcode: data } }); }}
             style={[scanStyles.actionBtn, { backgroundColor: theme.accent }]}
           >
-            <Text style={scanStyles.actionBtnText}>Add New Product</Text>
+            <Text style={scanStyles.actionBtnText}>Agregar producto</Text>
           </Pressable>
         )}
       </View>
@@ -122,7 +178,7 @@ export default function ScanScreen() {
   const [scanned, setScanned] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
-  const [ocrResult, setOcrResult] = useState<{ name: string; brand: string; serial: string; photoUri: string } | null>(null);
+  const [ocrResult, setOcrResult] = useState<(OCRFields & { photoUri: string }) | null>(null);
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -136,7 +192,7 @@ export default function ScanScreen() {
   const pickPhotoForOCR = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      showToast('Photo library access required', 'error');
+      showToast('Se requiere acceso a la galería', 'error');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -161,14 +217,14 @@ export default function ScanScreen() {
     setOcrLoading(true);
     try {
       if (!VISION_API_KEY) {
-        showToast('No Google Vision API key set. Redirecting to manual entry.', 'info');
+        showToast('Sin clave de Google Vision. Redirigiendo a entrada manual.', 'info');
         router.push({ pathname: '/product/new', params: { photoUri: uri } });
         return;
       }
       const result = await runOCR(base64);
       setOcrResult({ ...result, photoUri: uri });
     } catch (e) {
-      showToast('OCR failed. Please try again.', 'error');
+      showToast('Error en OCR. Intenta de nuevo.', 'error');
     } finally {
       setOcrLoading(false);
     }
@@ -185,7 +241,7 @@ export default function ScanScreen() {
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
       <View style={[styles.topBar, { paddingTop: topPad + 12 }]}>
-        <Text style={[styles.title, { color: theme.text }]}>Scan</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Escanear</Text>
         <View style={[styles.modeSwitch, { backgroundColor: theme.backgroundTertiary }]}>
           {(['barcode', 'ocr'] as const).map((m) => (
             <Pressable
@@ -195,7 +251,7 @@ export default function ScanScreen() {
             >
               <Ionicons name={m === 'barcode' ? 'barcode-outline' : 'camera-outline'} size={16} color={mode === m ? '#0D1117' : theme.textSecondary} />
               <Text style={[styles.modeText, { color: mode === m ? '#0D1117' : theme.textSecondary }]}>
-                {m === 'barcode' ? 'Barcode' : 'OCR'}
+                {m === 'barcode' ? 'Código' : 'Etiqueta'}
               </Text>
             </Pressable>
           ))}
@@ -207,9 +263,9 @@ export default function ScanScreen() {
           {!permission.granted ? (
             <View style={[styles.permBox, { backgroundColor: theme.backgroundTertiary }]}>
               <Ionicons name="camera-outline" size={48} color={theme.textTertiary} />
-              <Text style={[styles.permText, { color: theme.text }]}>Camera access needed</Text>
+              <Text style={[styles.permText, { color: theme.text }]}>Se necesita acceso a la cámara</Text>
               <Pressable onPress={requestPermission} style={[styles.permBtn, { backgroundColor: theme.accent }]}>
-                <Text style={styles.permBtnText}>Grant Access</Text>
+                <Text style={styles.permBtnText}>Otorgar acceso</Text>
               </Pressable>
             </View>
           ) : (
@@ -226,7 +282,7 @@ export default function ScanScreen() {
                     <View style={[styles.corner, styles.cornerBL, { borderColor: theme.accent }]} />
                     <View style={[styles.corner, styles.cornerBR, { borderColor: theme.accent }]} />
                   </View>
-                  <Text style={styles.scanHint}>Align barcode within frame</Text>
+                  <Text style={styles.scanHint}>Alinea el código de barras en el marco</Text>
                 </View>
               </CameraView>
               {scanResult && (
@@ -241,7 +297,7 @@ export default function ScanScreen() {
                   onPress={() => setScanned(false)}
                   style={[styles.rescanBtn, { backgroundColor: theme.accent }]}
                 >
-                  <Text style={styles.rescanText}>Scan Again</Text>
+                  <Text style={styles.rescanText}>Escanear de nuevo</Text>
                 </Pressable>
               )}
             </>
@@ -255,15 +311,15 @@ export default function ScanScreen() {
         >
           <View style={[styles.ocrHero, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <Ionicons name="scan-circle-outline" size={64} color={theme.accent} />
-            <Text style={[styles.ocrTitle, { color: theme.text }]}>Label & OCR Scanner</Text>
+            <Text style={[styles.ocrTitle, { color: theme.text }]}>Escáner de etiquetas</Text>
             <Text style={[styles.ocrSub, { color: theme.textSecondary }]}>
-              Take or upload a photo of a product label. Google Cloud Vision will auto-fill product details.
+              Toma o sube una foto de la etiqueta del producto. Se extraerán automáticamente el nombre, marca, código de barras y precio.
             </Text>
             {!VISION_API_KEY && (
               <View style={[styles.apiNotice, { backgroundColor: theme.warning + '18' }]}>
                 <Ionicons name="information-circle" size={16} color={theme.warning} />
                 <Text style={[styles.apiNoticeText, { color: theme.warning }]}>
-                  Set EXPO_PUBLIC_GOOGLE_VISION_API_KEY for OCR. Without it, you'll proceed to manual entry.
+                  Configura EXPO_PUBLIC_GOOGLE_VISION_API_KEY para OCR. Sin ella, irás a la entrada manual.
                 </Text>
               </View>
             )}
@@ -272,25 +328,29 @@ export default function ScanScreen() {
           {ocrLoading ? (
             <View style={styles.ocrLoading}>
               <ActivityIndicator size="large" color={theme.accent} />
-              <Text style={[styles.ocrLoadingText, { color: theme.textSecondary }]}>Analyzing label...</Text>
+              <Text style={[styles.ocrLoadingText, { color: theme.textSecondary }]}>Analizando etiqueta...</Text>
             </View>
           ) : ocrResult ? (
             <View style={[styles.ocrResultBox, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <Image source={{ uri: ocrResult.photoUri }} style={styles.ocrPreview} contentFit="cover" />
               <View style={styles.ocrResultFields}>
-                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Detected Name</Text>
+                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Nombre detectado</Text>
                 <Text style={[styles.ocrFieldValue, { color: theme.text }]}>{ocrResult.name || '—'}</Text>
-                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Detected Brand</Text>
+                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Marca detectada</Text>
                 <Text style={[styles.ocrFieldValue, { color: theme.text }]}>{ocrResult.brand || '—'}</Text>
-                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Serial / Code</Text>
+                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Serie / Código</Text>
                 <Text style={[styles.ocrFieldValue, { color: theme.text }]}>{ocrResult.serial || '—'}</Text>
+                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Código de barras</Text>
+                <Text style={[styles.ocrFieldValue, { color: theme.text }]}>{ocrResult.barcode || '—'}</Text>
+                <Text style={[styles.ocrFieldLabel, { color: theme.textSecondary }]}>Precio detectado</Text>
+                <Text style={[styles.ocrFieldValue, { color: theme.text }]}>{ocrResult.price ? `$${ocrResult.price}` : '—'}</Text>
               </View>
               <View style={styles.ocrResultActions}>
                 <Pressable
                   onPress={() => setOcrResult(null)}
                   style={[styles.ocrBtn, { borderWidth: 1, borderColor: theme.cardBorder }]}
                 >
-                  <Text style={[styles.ocrBtnText, { color: theme.text }]}>Retake</Text>
+                  <Text style={[styles.ocrBtnText, { color: theme.text }]}>Reintentar</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => router.push({
@@ -299,12 +359,14 @@ export default function ScanScreen() {
                       prefillName: ocrResult.name,
                       prefillBrand: ocrResult.brand,
                       prefillSerial: ocrResult.serial,
+                      prefillBarcode: ocrResult.barcode,
+                      prefillPrice: ocrResult.price,
                       photoUri: ocrResult.photoUri,
                     },
                   })}
                   style={[styles.ocrBtn, { backgroundColor: theme.accent, flex: 1.5 }]}
                 >
-                  <Text style={[styles.ocrBtnText, { color: '#0D1117' }]}>Use These Details</Text>
+                  <Text style={[styles.ocrBtnText, { color: '#0D1117' }]}>Usar estos datos</Text>
                 </Pressable>
               </View>
             </View>
@@ -312,18 +374,18 @@ export default function ScanScreen() {
             <View style={styles.ocrButtons}>
               <Pressable onPress={takePhotoForOCR} style={[styles.ocrActionBtn, { backgroundColor: theme.accent }]}>
                 <Ionicons name="camera" size={24} color="#0D1117" />
-                <Text style={[styles.ocrActionText, { color: '#0D1117' }]}>Take Photo</Text>
+                <Text style={[styles.ocrActionText, { color: '#0D1117' }]}>Tomar foto</Text>
               </Pressable>
               <Pressable onPress={pickPhotoForOCR} style={[styles.ocrActionBtn, { backgroundColor: theme.backgroundTertiary, borderWidth: 1, borderColor: theme.cardBorder }]}>
                 <Ionicons name="images-outline" size={24} color={theme.text} />
-                <Text style={[styles.ocrActionText, { color: theme.text }]}>Choose from Library</Text>
+                <Text style={[styles.ocrActionText, { color: theme.text }]}>Elegir de la galería</Text>
               </Pressable>
               <Pressable
                 onPress={() => router.push('/product/new')}
                 style={[styles.ocrActionBtn, { backgroundColor: theme.backgroundTertiary, borderWidth: 1, borderColor: theme.cardBorder }]}
               >
                 <Ionicons name="create-outline" size={24} color={theme.text} />
-                <Text style={[styles.ocrActionText, { color: theme.text }]}>Manual Entry</Text>
+                <Text style={[styles.ocrActionText, { color: theme.text }]}>Entrada manual</Text>
               </Pressable>
             </View>
           )}

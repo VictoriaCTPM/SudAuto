@@ -21,14 +21,14 @@ function ReportHistoryItem({ report, theme }: { report: DailyReport; theme: any 
       <View style={histStyles.cardTop}>
         <View>
           <Text style={[histStyles.date, { color: theme.text }]}>
-            {new Date(report.date + 'T12:00').toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}
+            {new Date(report.date + 'T12:00').toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}
           </Text>
-          <Text style={[histStyles.items, { color: theme.textSecondary }]}>{report.totalItemsSold} items sold</Text>
+          <Text style={[histStyles.items, { color: theme.textSecondary }]}>{report.totalItemsSold} artículos vendidos</Text>
         </View>
         <View style={histStyles.cardRight}>
           <Text style={[histStyles.revenue, { color: theme.text }]}>${report.totalGrossRevenue.toFixed(2)}</Text>
           <Text style={[histStyles.profit, { color: report.estimatedProfit >= 0 ? theme.success : theme.danger }]}>
-            {report.estimatedProfit >= 0 ? '+' : ''}{report.estimatedProfit.toFixed(2)} profit
+            {report.estimatedProfit >= 0 ? '+' : ''}{report.estimatedProfit.toFixed(2)} ganancia
           </Text>
         </View>
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={theme.textTertiary} />
@@ -36,11 +36,11 @@ function ReportHistoryItem({ report, theme }: { report: DailyReport; theme: any 
       {expanded && (
         <View style={[histStyles.details, { borderTopColor: theme.separator }]}>
           {[
-            { label: 'Net Revenue', value: `$${report.totalNetRevenue.toFixed(2)}` },
-            { label: 'Gross Revenue', value: `$${report.totalGrossRevenue.toFixed(2)}` },
-            { label: 'Items Sold', value: report.totalItemsSold },
-            { label: 'Stock Products', value: report.stockSnapshot.totalProducts },
-            { label: 'Stock Value', value: `$${report.stockSnapshot.totalValue.toFixed(2)}` },
+            { label: 'Ingreso neto', value: `$${report.totalNetRevenue.toFixed(2)}` },
+            { label: 'Ingreso bruto', value: `$${report.totalGrossRevenue.toFixed(2)}` },
+            { label: 'Artículos vendidos', value: report.totalItemsSold },
+            { label: 'Productos en stock', value: report.stockSnapshot.totalProducts },
+            { label: 'Valor del stock', value: `$${report.stockSnapshot.totalValue.toFixed(2)}` },
           ].map((r) => (
             <View key={r.label} style={histStyles.detailRow}>
               <Text style={[histStyles.detailLabel, { color: theme.textSecondary }]}>{r.label}</Text>
@@ -49,7 +49,7 @@ function ReportHistoryItem({ report, theme }: { report: DailyReport; theme: any 
           ))}
           {report.sales.length > 0 && (
             <>
-              <Text style={[histStyles.salesTitle, { color: theme.textSecondary }]}>Items Sold</Text>
+              <Text style={[histStyles.salesTitle, { color: theme.textSecondary }]}>Artículos vendidos</Text>
               {report.sales.map((s) => (
                 <View key={s.id} style={histStyles.saleRow}>
                   <Text style={[histStyles.saleName, { color: theme.text }]} numberOfLines={1}>{s.productName}</Text>
@@ -108,7 +108,7 @@ export default function ReportsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <Text style={[styles.title, { color: theme.text }]}>Reports</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Informes</Text>
         <View style={[styles.tabSwitch, { backgroundColor: theme.backgroundTertiary }]}>
           {(['overview', 'history'] as const).map((t) => (
             <Pressable
@@ -117,7 +117,7 @@ export default function ReportsScreen() {
               style={[styles.tabBtn, tab === t && { backgroundColor: theme.accent }]}
             >
               <Text style={[styles.tabText, { color: tab === t ? '#0D1117' : theme.textSecondary }]}>
-                {t === 'overview' ? 'Overview' : 'History'}
+                {t === 'overview' ? 'Resumen' : 'Historial'}
               </Text>
             </Pressable>
           ))}
@@ -131,10 +131,10 @@ export default function ReportsScreen() {
         >
           <View style={styles.statsGrid}>
             {[
-              { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: 'cash-outline', color: theme.accent },
-              { label: 'Total Profit', value: `$${totalProfit.toFixed(2)}`, icon: 'trending-up-outline', color: theme.success },
-              { label: 'Stock Value', value: `$${totalStockValue.toFixed(2)}`, icon: 'cube-outline', color: theme.info },
-              { label: 'Total Sales', value: sales.length, icon: 'receipt-outline', color: theme.text },
+              { label: 'Ingresos totales', value: `$${totalRevenue.toFixed(2)}`, icon: 'cash-outline', color: theme.accent },
+              { label: 'Ganancia total', value: `$${totalProfit.toFixed(2)}`, icon: 'trending-up-outline', color: theme.success },
+              { label: 'Valor del stock', value: `$${totalStockValue.toFixed(2)}`, icon: 'cube-outline', color: theme.info },
+              { label: 'Total ventas', value: sales.length, icon: 'receipt-outline', color: theme.text },
             ].map((s) => (
               <View key={s.label} style={[styles.statBox, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                 <View style={[styles.statIcon, { backgroundColor: s.color + '22' }]}>
@@ -148,7 +148,7 @@ export default function ReportsScreen() {
 
           <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Revenue</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Ingresos</Text>
               <View style={[styles.periodSwitch, { backgroundColor: theme.backgroundTertiary }]}>
                 {(['week', 'month'] as const).map((p) => (
                   <Pressable
@@ -174,14 +174,14 @@ export default function ReportsScreen() {
                 Total: ${chartData.reduce((s, d) => s + d.gross, 0).toFixed(2)}
               </Text>
               <Text style={[styles.legendText, { color: theme.textTertiary }]}>
-                Avg/day: ${(chartData.reduce((s, d) => s + d.gross, 0) / chartData.length).toFixed(2)}
+                Prom/día: ${(chartData.reduce((s, d) => s + d.gross, 0) / chartData.length).toFixed(2)}
               </Text>
             </View>
           </View>
 
           {topProducts.length > 0 && (
             <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Top Products</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Productos más vendidos</Text>
               {topProducts.map((tp, i) => (
                 <View key={tp.product.id} style={[styles.topRow, i > 0 && { borderTopWidth: 1, borderTopColor: theme.separator }]}>
                   <View style={[styles.rankBadge, { backgroundColor: i === 0 ? theme.accent + '22' : theme.backgroundTertiary }]}>
@@ -189,7 +189,7 @@ export default function ReportsScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.topName, { color: theme.text }]} numberOfLines={1}>{tp.product.name}</Text>
-                    <Text style={[styles.topSub, { color: theme.textSecondary }]}>{tp.totalSold} sold</Text>
+                    <Text style={[styles.topSub, { color: theme.textSecondary }]}>{tp.totalSold} vendidos</Text>
                   </View>
                   <Text style={[styles.topRevenue, { color: theme.accent }]}>${tp.totalRevenue.toFixed(2)}</Text>
                 </View>
@@ -199,14 +199,14 @@ export default function ReportsScreen() {
 
           {products.length > 0 && (
             <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Stock Overview</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Resumen de stock</Text>
               <BarChart
                 data={products.slice(0, 10).map((p) => ({ day: p.name.slice(0, 4), value: p.quantity }))}
                 height={140}
                 accentColor={theme.info}
                 formatValue={(v) => v.toFixed(0)}
               />
-              <Text style={[styles.chartCaption, { color: theme.textTertiary }]}>Top 10 products by name (quantity)</Text>
+              <Text style={[styles.chartCaption, { color: theme.textTertiary }]}>Top 10 productos por nombre (cantidad)</Text>
             </View>
           )}
         </ScrollView>
@@ -220,9 +220,9 @@ export default function ReportsScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="document-text-outline" size={52} color={theme.textTertiary} />
-              <Text style={[styles.emptyTitle, { color: theme.text }]}>No reports yet</Text>
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin informes aún</Text>
               <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-                Complete a work day to generate your first report
+                Completa una jornada para generar tu primer informe
               </Text>
             </View>
           }

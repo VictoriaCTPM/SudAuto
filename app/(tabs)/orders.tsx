@@ -12,9 +12,9 @@ import { useToast } from '@/components/Toast';
 import * as Haptics from 'expo-haptics';
 
 const STATUS_CONFIG = {
-  ordered: { label: 'Ordered', color: '#38BDF8', icon: 'time-outline' as const },
-  received: { label: 'Received', color: '#10B981', icon: 'checkmark-circle-outline' as const },
-  partial: { label: 'Partial', color: '#F5A623', icon: 'git-branch-outline' as const },
+  ordered: { label: 'Pedido', color: '#38BDF8', icon: 'time-outline' as const },
+  received: { label: 'Recibido', color: '#10B981', icon: 'checkmark-circle-outline' as const },
+  partial: { label: 'Parcial', color: '#F5A623', icon: 'git-branch-outline' as const },
 };
 
 function OrderCard({ order, theme, onConfirm, onDelete }: { order: Order; theme: any; onConfirm: () => void; onDelete: () => void }) {
@@ -34,9 +34,9 @@ function OrderCard({ order, theme, onConfirm, onDelete }: { order: Order; theme:
 
       <View style={styles.cardMeta}>
         {[
-          { icon: 'cube-outline', label: `Qty: ${order.quantity}` },
+          { icon: 'cube-outline', label: `Cant: ${order.quantity}` },
           { icon: 'cash-outline', label: `$${order.expectedGrossCost.toFixed(2)}` },
-          { icon: 'calendar-outline', label: order.expectedDelivery ? new Date(order.expectedDelivery).toLocaleDateString() : '—' },
+          { icon: 'calendar-outline', label: order.expectedDelivery ? new Date(order.expectedDelivery).toLocaleDateString('es') : '—' },
         ].map((m) => (
           <View key={m.label} style={styles.metaItem}>
             <Ionicons name={m.icon as any} size={13} color={theme.textTertiary} />
@@ -55,7 +55,7 @@ function OrderCard({ order, theme, onConfirm, onDelete }: { order: Order; theme:
         <View style={styles.cardActions}>
           <Pressable onPress={onConfirm} style={[styles.confirmBtn, { backgroundColor: theme.success + '18' }]}>
             <Ionicons name="checkmark-circle" size={16} color={theme.success} />
-            <Text style={[styles.confirmText, { color: theme.success }]}>Confirm Receipt</Text>
+            <Text style={[styles.confirmText, { color: theme.success }]}>Confirmar recepción</Text>
           </Pressable>
           <Pressable onPress={onDelete} style={[styles.deleteBtn, { backgroundColor: theme.danger + '18' }]}>
             <Ionicons name="trash-outline" size={16} color={theme.danger} />
@@ -87,7 +87,7 @@ function AddOrderModal({ visible, onClose, theme }: { visible: boolean; onClose:
   const set = (k: string, v: string) => setForm((prev) => ({ ...prev, [k]: v }));
 
   const handleSubmit = async () => {
-    if (!form.productName.trim()) { showToast('Product name is required', 'error'); return; }
+    if (!form.productName.trim()) { showToast('El nombre del producto es obligatorio', 'error'); return; }
     setLoading(true);
     try {
       await addOrder({
@@ -102,32 +102,32 @@ function AddOrderModal({ visible, onClose, theme }: { visible: boolean; onClose:
         notes: form.notes.trim(),
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Order added', 'success');
+      showToast('Pedido agregado', 'success');
       setForm({ productName: '', brand: '', quantity: '1', expectedNetCost: '', expectedGrossCost: '', supplier: '', expectedDelivery: '', notes: '' });
       onClose();
     } catch {
-      showToast('Failed to add order', 'error');
+      showToast('Error al agregar pedido', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const fields = [
-    { key: 'productName', label: 'Product Name *', placeholder: 'Enter product name', keyboardType: 'default' },
-    { key: 'brand', label: 'Brand', placeholder: 'Enter brand', keyboardType: 'default' },
-    { key: 'quantity', label: 'Quantity', placeholder: '1', keyboardType: 'number-pad' },
-    { key: 'expectedNetCost', label: 'Expected Net Cost ($)', placeholder: '0.00', keyboardType: 'decimal-pad' },
-    { key: 'expectedGrossCost', label: 'Expected Gross Cost ($)', placeholder: '0.00', keyboardType: 'decimal-pad' },
-    { key: 'supplier', label: 'Supplier', placeholder: 'Supplier name', keyboardType: 'default' },
-    { key: 'expectedDelivery', label: 'Expected Delivery (YYYY-MM-DD)', placeholder: 'e.g. 2025-03-15', keyboardType: 'default' },
-    { key: 'notes', label: 'Notes', placeholder: 'Any notes...', keyboardType: 'default' },
+    { key: 'productName', label: 'Nombre del producto *', placeholder: 'Ingresa nombre del producto', keyboardType: 'default' },
+    { key: 'brand', label: 'Marca', placeholder: 'Ingresa la marca', keyboardType: 'default' },
+    { key: 'quantity', label: 'Cantidad', placeholder: '1', keyboardType: 'number-pad' },
+    { key: 'expectedNetCost', label: 'Costo neto esperado ($)', placeholder: '0.00', keyboardType: 'decimal-pad' },
+    { key: 'expectedGrossCost', label: 'Costo bruto esperado ($)', placeholder: '0.00', keyboardType: 'decimal-pad' },
+    { key: 'supplier', label: 'Proveedor', placeholder: 'Nombre del proveedor', keyboardType: 'default' },
+    { key: 'expectedDelivery', label: 'Entrega esperada (AAAA-MM-DD)', placeholder: 'ej. 2026-04-15', keyboardType: 'default' },
+    { key: 'notes', label: 'Notas', placeholder: 'Notas adicionales...', keyboardType: 'default' },
   ];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={[modalStyles.header, { paddingTop: insets.top + 16, borderBottomColor: theme.separator }]}>
-          <Text style={[modalStyles.title, { color: theme.text }]}>New Order</Text>
+          <Text style={[modalStyles.title, { color: theme.text }]}>Nuevo pedido</Text>
           <Pressable onPress={onClose}>
             <Ionicons name="close" size={24} color={theme.textTertiary} />
           </Pressable>
@@ -151,7 +151,7 @@ function AddOrderModal({ visible, onClose, theme }: { visible: boolean; onClose:
             disabled={loading}
             style={[modalStyles.btn, { backgroundColor: theme.accent, opacity: loading ? 0.8 : 1 }]}
           >
-            <Text style={modalStyles.btnText}>{loading ? 'Adding...' : 'Add Order'}</Text>
+            <Text style={modalStyles.btnText}>{loading ? 'Agregando...' : 'Agregar pedido'}</Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -190,16 +190,16 @@ export default function OrdersScreen() {
 
   const handleConfirm = (order: Order) => {
     Alert.prompt(
-      'Confirm Receipt',
-      `How many units of "${order.productName}" received? (Expected: ${order.quantity})`,
+      'Confirmar recepción',
+      `¿Cuántas unidades de "${order.productName}" recibiste? (Esperadas: ${order.quantity})`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Confirm', onPress: async (val) => {
+          text: 'Confirmar', onPress: async (val) => {
             const qty = parseInt(val || String(order.quantity)) || order.quantity;
             await receiveOrder(order.id, qty);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast(`Received ${qty} × ${order.productName}`, 'success');
+            showToast(`Recibido ${qty} × ${order.productName}`, 'success');
           },
         },
       ],
@@ -210,22 +210,22 @@ export default function OrdersScreen() {
   };
 
   const handleConfirmAndroid = (order: Order) => {
-    Alert.alert('Confirm Receipt', `Receive all ${order.quantity} units of "${order.productName}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('Confirmar recepción', `¿Recibir todas las ${order.quantity} unidades de "${order.productName}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
       {
-        text: 'Confirm', onPress: async () => {
+        text: 'Confirmar', onPress: async () => {
           await receiveOrder(order.id, order.quantity);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          showToast(`Received ${order.quantity} × ${order.productName}`, 'success');
+          showToast(`Recibido ${order.quantity} × ${order.productName}`, 'success');
         },
       },
     ]);
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Delete Order', 'Remove this order?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteOrder(id) },
+    Alert.alert('Eliminar pedido', '¿Eliminar este pedido?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: () => deleteOrder(id) },
     ]);
   };
 
@@ -236,9 +236,9 @@ export default function OrdersScreen() {
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={[styles.title, { color: theme.text }]}>Orders</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Pedidos</Text>
             <Text style={[styles.sub, { color: theme.textSecondary }]}>
-              {pendingCount} pending · {orders.length} total
+              {pendingCount} pendientes · {orders.length} total
             </Text>
           </View>
           <Pressable onPress={() => setAddVisible(true)} style={[styles.addBtn, { backgroundColor: theme.accent }]}>
@@ -254,7 +254,7 @@ export default function OrdersScreen() {
               style={[styles.chip, { backgroundColor: filter === f ? theme.accent : theme.backgroundTertiary, borderColor: filter === f ? theme.accent : theme.cardBorder }]}
             >
               <Text style={[styles.chipText, { color: filter === f ? '#0D1117' : theme.textSecondary }]}>
-                {f === 'all' ? 'All' : STATUS_CONFIG[f].label}
+                {f === 'all' ? 'Todos' : STATUS_CONFIG[f].label}
               </Text>
             </Pressable>
           ))}
@@ -270,13 +270,13 @@ export default function OrdersScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="git-pull-request-outline" size={52} color={theme.textTertiary} />
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>No orders</Text>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin pedidos</Text>
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-              {filter !== 'all' ? 'No orders with this status' : 'Add an order for upcoming stock'}
+              {filter !== 'all' ? 'No hay pedidos con este estado' : 'Agrega un pedido para stock entrante'}
             </Text>
             {filter === 'all' && (
               <Pressable onPress={() => setAddVisible(true)} style={[styles.emptyBtn, { backgroundColor: theme.accent }]}>
-                <Text style={styles.emptyBtnText}>Add Order</Text>
+                <Text style={styles.emptyBtnText}>Agregar pedido</Text>
               </Pressable>
             )}
           </View>

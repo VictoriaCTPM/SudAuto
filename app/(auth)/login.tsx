@@ -24,7 +24,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      setError('Please fill in all fields');
+      setError('Por favor completa todos los campos');
       return;
     }
     setError('');
@@ -34,7 +34,7 @@ export default function LoginScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch (e: any) {
-      setError(e.message ?? 'Login failed');
+      setError(e.message ?? 'Error al iniciar sesión');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export default function LoginScreen() {
             <Ionicons name="cube" size={36} color={theme.accent} />
           </View>
           <Text style={[styles.title, { color: theme.text }]}>StockPilot</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Sign in to manage your inventory</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Inicia sesión para gestionar tu inventario</Text>
         </View>
 
         <View style={styles.form}>
@@ -68,14 +68,14 @@ export default function LoginScreen() {
           ) : null}
 
           <View>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Email</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Correo electrónico</Text>
             <View style={[styles.inputWrap, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
               <Ionicons name="mail-outline" size={18} color={theme.textTertiary} />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="you@example.com"
+                placeholder="tu@ejemplo.com"
                 placeholderTextColor={theme.placeholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -85,14 +85,14 @@ export default function LoginScreen() {
           </View>
 
           <View>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Contraseña</Text>
             <View style={[styles.inputWrap, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
               <Ionicons name="lock-closed-outline" size={18} color={theme.textTertiary} />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Your password"
+                placeholder="Tu contraseña"
                 placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
@@ -110,16 +110,16 @@ export default function LoginScreen() {
           >
             {loading
               ? <Ionicons name="reload" size={20} color="#0D1117" />
-              : <Text style={styles.btnText}>Sign In</Text>
+              : <Text style={styles.btnText}>Entrar</Text>
             }
           </Pressable>
         </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Don't have an account?</Text>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>¿No tienes una cuenta?</Text>
           <Link href="/(auth)/register" asChild>
             <Pressable>
-              <Text style={[styles.link, { color: theme.accent }]}> Create one</Text>
+              <Text style={[styles.link, { color: theme.accent }]}> Crear una</Text>
             </Pressable>
           </Link>
         </View>

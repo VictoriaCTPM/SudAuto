@@ -29,7 +29,7 @@ export default function ProductDetailScreen() {
     brand: product?.brand || '',
     serialNumber: product?.serialNumber || '',
     barcode: product?.barcode || '',
-    category: product?.category || 'Other',
+    category: product?.category || 'Otro',
     netPrice: product?.netPrice?.toString() || '',
     grossPrice: product?.grossPrice?.toString() || '',
     quantity: product?.quantity?.toString() || '0',
@@ -66,9 +66,9 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <View style={[styles.root, { backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={[styles.notFound, { color: theme.textSecondary }]}>Product not found</Text>
+        <Text style={[styles.notFound, { color: theme.textSecondary }]}>Producto no encontrado</Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={[styles.backLink, { color: theme.accent }]}>Go back</Text>
+          <Text style={[styles.backLink, { color: theme.accent }]}>Volver</Text>
         </Pressable>
       </View>
     );
@@ -77,7 +77,7 @@ export default function ProductDetailScreen() {
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.name.trim()) { showToast('Product name is required', 'error'); return; }
+    if (!form.name.trim()) { showToast('El nombre del producto es obligatorio', 'error'); return; }
     setLoading(true);
     try {
       await updateProduct(id, {
@@ -95,23 +95,23 @@ export default function ProductDetailScreen() {
         photoUri: photoUri || undefined,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Product updated', 'success');
+      showToast('Producto actualizado', 'success');
       setEditing(false);
     } catch (e: any) {
-      showToast(e.message || 'Failed to update', 'error');
+      showToast(e.message || 'Error al actualizar', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete Product', `Delete "${product.name}"? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('Eliminar producto', `¿Eliminar "${product.name}"? Esta acción no se puede deshacer.`, [
+      { text: 'Cancelar', style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive', onPress: async () => {
+        text: 'Eliminar', style: 'destructive', onPress: async () => {
           await deleteProduct(id);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          showToast('Product deleted', 'success');
+          showToast('Producto eliminado', 'success');
           router.back();
         },
       },
@@ -147,7 +147,7 @@ export default function ProductDetailScreen() {
           {editing ? (
             <Pressable onPress={handleSave} disabled={loading}>
               <Text style={[styles.saveBtn, { color: loading ? theme.textTertiary : theme.accent }]}>
-                {loading ? '...' : 'Save'}
+                {loading ? '...' : 'Guardar'}
               </Text>
             </Pressable>
           ) : (
@@ -167,7 +167,7 @@ export default function ProductDetailScreen() {
         {(['info', 'history'] as const).map((t) => (
           <Pressable key={t} onPress={() => setTab(t)} style={[styles.tabBtn, tab === t && { borderBottomColor: theme.accent }]}>
             <Text style={[styles.tabText, { color: tab === t ? theme.accent : theme.textSecondary }]}>
-              {t === 'info' ? 'Info' : 'Price History'}
+              {t === 'info' ? 'Información' : 'Historial de precios'}
             </Text>
           </Pressable>
         ))}
@@ -187,14 +187,14 @@ export default function ProductDetailScreen() {
           ) : editing ? (
             <Pressable onPress={pickPhoto} style={[styles.photoPlaceholder, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
               <Ionicons name="camera-outline" size={28} color={theme.textTertiary} />
-              <Text style={[styles.photoPlaceholderText, { color: theme.textTertiary }]}>Add photo</Text>
+              <Text style={[styles.photoPlaceholderText, { color: theme.textTertiary }]}>Agregar foto</Text>
             </Pressable>
           ) : null}
 
           <View style={[styles.statusRow, { backgroundColor: isLow ? theme.danger + '18' : theme.success + '18' }]}>
             <Ionicons name={isLow ? 'warning' : 'checkmark-circle'} size={18} color={isLow ? theme.danger : theme.success} />
             <Text style={[styles.statusText, { color: isLow ? theme.danger : theme.success }]}>
-              {isLow ? `Low stock — only ${product.quantity} remaining` : `In stock — ${product.quantity} units`}
+              {isLow ? `Stock bajo — solo quedan ${product.quantity}` : `En stock — ${product.quantity} unidades`}
             </Text>
           </View>
 
@@ -211,17 +211,17 @@ export default function ProductDetailScreen() {
               </View>
 
               {[
-                { label: 'Brand', value: product.brand || '—' },
-                { label: 'Category', value: product.category },
-                { label: 'Net Price', value: `$${product.netPrice.toFixed(2)}` },
-                { label: 'Gross Price', value: `$${product.grossPrice.toFixed(2)}` },
-                { label: 'Min Qty Alert', value: product.minQuantity },
-                { label: 'Serial / SKU', value: product.serialNumber || '—' },
-                { label: 'Barcode', value: product.barcode || '—' },
-                { label: 'Supplier', value: product.supplier || '—' },
-                { label: 'Notes', value: product.notes || '—' },
-                { label: 'Added', value: new Date(product.createdAt).toLocaleDateString() },
-                { label: 'Updated', value: new Date(product.updatedAt).toLocaleDateString() },
+                { label: 'Marca', value: product.brand || '—' },
+                { label: 'Categoría', value: product.category },
+                { label: 'Precio neto', value: `$${product.netPrice.toFixed(2)}` },
+                { label: 'Precio bruto', value: `$${product.grossPrice.toFixed(2)}` },
+                { label: 'Alerta stock bajo', value: product.minQuantity },
+                { label: 'Serie / SKU', value: product.serialNumber || '—' },
+                { label: 'Código de barras', value: product.barcode || '—' },
+                { label: 'Proveedor', value: product.supplier || '—' },
+                { label: 'Notas', value: product.notes || '—' },
+                { label: 'Agregado', value: new Date(product.createdAt).toLocaleDateString('es') },
+                { label: 'Actualizado', value: new Date(product.updatedAt).toLocaleDateString('es') },
               ].map((row) => (
                 <View key={row.label} style={[styles.infoRow, { borderBottomColor: theme.separator }]}>
                   <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>{row.label}</Text>
@@ -232,10 +232,10 @@ export default function ProductDetailScreen() {
           ) : (
             <View style={styles.editMode}>
               {[
-                { key: 'name', label: 'Product Name *', keyboard: 'default' },
-                { key: 'brand', label: 'Brand', keyboard: 'default' },
-                { key: 'serialNumber', label: 'Serial Number / SKU', keyboard: 'default' },
-                { key: 'barcode', label: 'Barcode / EAN', keyboard: 'number-pad' },
+                { key: 'name', label: 'Nombre del producto *', keyboard: 'default' },
+                { key: 'brand', label: 'Marca', keyboard: 'default' },
+                { key: 'serialNumber', label: 'Número de serie / SKU', keyboard: 'default' },
+                { key: 'barcode', label: 'Código de barras / EAN', keyboard: 'number-pad' },
               ].map((f) => (
                 <View key={f.key}>
                   <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>{f.label}</Text>
@@ -248,7 +248,7 @@ export default function ProductDetailScreen() {
                 </View>
               ))}
 
-              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Category</Text>
+              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Categoría</Text>
               <Pressable
                 onPress={() => setCatModal(true)}
                 style={[styles.input, styles.catPicker, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}
@@ -259,30 +259,30 @@ export default function ProductDetailScreen() {
 
               <View style={styles.row2}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Net Price ($)</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Precio neto ($)</Text>
                   <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.netPrice} onChangeText={(v) => set('netPrice', v)} keyboardType="decimal-pad" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Gross Price ($)</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Precio bruto ($)</Text>
                   <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.grossPrice} onChangeText={(v) => set('grossPrice', v)} keyboardType="decimal-pad" />
                 </View>
               </View>
 
               <View style={styles.row2}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Quantity</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Cantidad</Text>
                   <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.quantity} onChangeText={(v) => set('quantity', v)} keyboardType="number-pad" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Low Stock Alert</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Alerta stock bajo</Text>
                   <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.minQuantity} onChangeText={(v) => set('minQuantity', v)} keyboardType="number-pad" />
                 </View>
               </View>
 
-              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Supplier</Text>
+              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Proveedor</Text>
               <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.supplier} onChangeText={(v) => set('supplier', v)} />
 
-              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Notes</Text>
+              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Notas</Text>
               <TextInput
                 style={[styles.input, styles.textarea, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]}
                 value={form.notes}
@@ -298,20 +298,20 @@ export default function ProductDetailScreen() {
           {product.priceHistory.length === 0 ? (
             <View style={styles.emptyHistory}>
               <Ionicons name="time-outline" size={40} color={theme.textTertiary} />
-              <Text style={[styles.emptyHistText, { color: theme.textSecondary }]}>No price history yet</Text>
+              <Text style={[styles.emptyHistText, { color: theme.textSecondary }]}>Sin historial de precios</Text>
             </View>
           ) : (
             [...product.priceHistory].reverse().map((h, i) => (
               <View key={i} style={[styles.histRow, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                 <View>
                   <Text style={[styles.histDate, { color: theme.text }]}>
-                    {new Date(h.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    {new Date(h.date).toLocaleDateString('es', { year: 'numeric', month: 'short', day: 'numeric' })}
                   </Text>
-                  {i === 0 && <Text style={[styles.histCurrent, { color: theme.success }]}>Current</Text>}
+                  {i === 0 && <Text style={[styles.histCurrent, { color: theme.success }]}>Actual</Text>}
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={[styles.histGross, { color: theme.text }]}>Gross: ${h.grossPrice.toFixed(2)}</Text>
-                  <Text style={[styles.histNet, { color: theme.textSecondary }]}>Net: ${h.netPrice.toFixed(2)}</Text>
+                  <Text style={[styles.histGross, { color: theme.text }]}>Bruto: ${h.grossPrice.toFixed(2)}</Text>
+                  <Text style={[styles.histNet, { color: theme.textSecondary }]}>Neto: ${h.netPrice.toFixed(2)}</Text>
                 </View>
               </View>
             ))
@@ -322,7 +322,7 @@ export default function ProductDetailScreen() {
       <Modal visible={catModal} animationType="slide" presentationStyle="formSheet" onRequestClose={() => setCatModal(false)}>
         <View style={[styles.catModal, { backgroundColor: theme.background }]}>
           <View style={[styles.catModalHeader, { borderBottomColor: theme.separator }]}>
-            <Text style={[styles.catModalTitle, { color: theme.text }]}>Select Category</Text>
+            <Text style={[styles.catModalTitle, { color: theme.text }]}>Seleccionar categoría</Text>
             <Pressable onPress={() => setCatModal(false)}>
               <Ionicons name="close" size={22} color={theme.textTertiary} />
             </Pressable>
@@ -332,7 +332,7 @@ export default function ProductDetailScreen() {
               style={[styles.newCatInput, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]}
               value={newCat}
               onChangeText={setNewCat}
-              placeholder="Add custom category..."
+              placeholder="Agregar categoría personalizada..."
               placeholderTextColor={theme.placeholder}
             />
             <Pressable onPress={handleAddCategory} style={[styles.addCatBtn, { backgroundColor: theme.accent }]}>

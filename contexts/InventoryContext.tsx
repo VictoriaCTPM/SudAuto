@@ -86,16 +86,22 @@ export interface DailyReport {
 }
 
 export const DEFAULT_CATEGORIES = [
-  'Electronics',
-  'Clothing',
-  'Food & Beverage',
-  'Tools',
-  'Office Supplies',
-  'Furniture',
-  'Health & Beauty',
-  'Toys',
-  'Sports',
-  'Other',
+  'Herramientas Manuales',
+  'Herramientas Eléctricas',
+  'Tornillería y Fijación',
+  'Pintura y Acabados',
+  'Plomería',
+  'Electricidad',
+  'Ferretería General',
+  'Accesorios Automotriz',
+  'Aceites y Lubricantes',
+  'Filtros y Refacciones',
+  'Llantas y Rines',
+  'Iluminación Vehicular',
+  'Baterías y Carga',
+  'Seguridad Industrial',
+  'Jardín y Exterior',
+  'Otro',
 ];
 
 const KEYS = {

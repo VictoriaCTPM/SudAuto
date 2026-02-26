@@ -26,15 +26,15 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password || !confirm) {
-      setError('Please fill in all fields');
+      setError('Por favor completa todos los campos');
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError('Las contraseñas no coinciden');
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('La contraseña debe tener al menos 6 caracteres');
       return;
     }
     setError('');
@@ -44,7 +44,7 @@ export default function RegisterScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch (e: any) {
-      setError(e.message ?? 'Registration failed');
+      setError(e.message ?? 'Error al registrarse');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -65,8 +65,8 @@ export default function RegisterScreen() {
           <View style={[styles.logoBox, { backgroundColor: theme.accent + '22' }]}>
             <Ionicons name="cube" size={36} color={theme.accent} />
           </View>
-          <Text style={[styles.title, { color: theme.text }]}>Create Account</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Start managing your inventory</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Crear cuenta</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Comienza a gestionar tu inventario</Text>
         </View>
 
         <View style={styles.form}>
@@ -78,8 +78,8 @@ export default function RegisterScreen() {
           ) : null}
 
           {[
-            { label: 'Full Name', value: name, onChange: setName, placeholder: 'John Doe', icon: 'person-outline', type: 'default' },
-            { label: 'Email', value: email, onChange: setEmail, placeholder: 'you@example.com', icon: 'mail-outline', type: 'email-address' },
+            { label: 'Nombre completo', value: name, onChange: setName, placeholder: 'Juan Pérez', icon: 'person-outline', type: 'default' },
+            { label: 'Correo electrónico', value: email, onChange: setEmail, placeholder: 'tu@ejemplo.com', icon: 'mail-outline', type: 'email-address' },
           ].map((f) => (
             <View key={f.label}>
               <Text style={[styles.label, { color: theme.textSecondary }]}>{f.label}</Text>
@@ -99,14 +99,14 @@ export default function RegisterScreen() {
           ))}
 
           <View>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Contraseña</Text>
             <View style={[styles.inputWrap, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
               <Ionicons name="lock-closed-outline" size={18} color={theme.textTertiary} />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Min. 6 characters"
+                placeholder="Mín. 6 caracteres"
                 placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showPw}
                 autoCapitalize="none"
@@ -118,14 +118,14 @@ export default function RegisterScreen() {
           </View>
 
           <View>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Confirm Password</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Confirmar contraseña</Text>
             <View style={[styles.inputWrap, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
               <Ionicons name="lock-closed-outline" size={18} color={theme.textTertiary} />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={confirm}
                 onChangeText={setConfirm}
-                placeholder="Repeat password"
+                placeholder="Repite la contraseña"
                 placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showPw}
                 autoCapitalize="none"
@@ -138,15 +138,15 @@ export default function RegisterScreen() {
             onPress={handleRegister}
             disabled={loading}
           >
-            <Text style={styles.btnText}>{loading ? 'Creating...' : 'Create Account'}</Text>
+            <Text style={styles.btnText}>{loading ? 'Creando...' : 'Crear cuenta'}</Text>
           </Pressable>
         </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Already have an account?</Text>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>¿Ya tienes una cuenta?</Text>
           <Link href="/(auth)/login" asChild>
             <Pressable>
-              <Text style={[styles.link, { color: theme.accent }]}> Sign in</Text>
+              <Text style={[styles.link, { color: theme.accent }]}> Iniciar sesión</Text>
             </Pressable>
           </Link>
         </View>

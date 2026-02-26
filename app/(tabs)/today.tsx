@@ -65,7 +65,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
     const netNum = parseFloat(saleNet) || 0;
     const grossNum = parseFloat(saleGross) || 0;
     if (qtyNum > selected.quantity) {
-      showToast(`Only ${selected.quantity} in stock`, 'error');
+      showToast(`Solo ${selected.quantity} en stock`, 'error');
       return;
     }
     setLoading(true);
@@ -81,7 +81,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
         purchaseGrossPrice: selected.grossPrice,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast(`Sold ${qtyNum}x ${selected.name}`, 'success');
+      showToast(`Vendido ${qtyNum}x ${selected.name}`, 'success');
       setSelected(null); setSearch(''); setQty('1');
       onClose();
     } catch (e: any) {
@@ -97,7 +97,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={[saleModalStyles.header, { paddingTop: insets.top + 16, borderBottomColor: theme.separator }]}>
-          <Text style={[saleModalStyles.title, { color: theme.text }]}>Register Sale</Text>
+          <Text style={[saleModalStyles.title, { color: theme.text }]}>Registrar venta</Text>
           <Pressable onPress={() => { reset(); onClose(); }}>
             <Ionicons name="close" size={24} color={theme.textTertiary} />
           </Pressable>
@@ -111,7 +111,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
                 style={[saleModalStyles.searchInput, { color: theme.text }]}
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Search products in stock..."
+                placeholder="Buscar productos en stock..."
                 placeholderTextColor={theme.placeholder}
                 autoFocus
               />
@@ -123,7 +123,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
               ListEmptyComponent={
                 <View style={saleModalStyles.empty}>
                   <Ionicons name="cube-outline" size={40} color={theme.textTertiary} />
-                  <Text style={[saleModalStyles.emptyText, { color: theme.textSecondary }]}>No products in stock</Text>
+                  <Text style={[saleModalStyles.emptyText, { color: theme.textSecondary }]}>Sin productos en stock</Text>
                 </View>
               }
               renderItem={({ item }) => (
@@ -138,7 +138,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text style={[saleModalStyles.pPrice, { color: theme.text }]}>${item.grossPrice.toFixed(2)}</Text>
                     <Text style={[saleModalStyles.pQty, { color: item.quantity <= item.minQuantity ? theme.danger : theme.success }]}>
-                      {item.quantity} left
+                      {item.quantity} disponibles
                     </Text>
                   </View>
                 </Pressable>
@@ -149,7 +149,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
           <ScrollView contentContainerStyle={saleModalStyles.form} keyboardShouldPersistTaps="handled">
             <Pressable onPress={() => setSelected(null)} style={saleModalStyles.backBtn}>
               <Ionicons name="arrow-back" size={18} color={theme.textSecondary} />
-              <Text style={[saleModalStyles.backText, { color: theme.textSecondary }]}>Change product</Text>
+              <Text style={[saleModalStyles.backText, { color: theme.textSecondary }]}>Cambiar producto</Text>
             </Pressable>
 
             <View style={[saleModalStyles.selectedCard, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
@@ -158,9 +158,9 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
             </View>
 
             {[
-              { label: 'Quantity', value: qty, onChange: setQty, hint: `Max: ${selected.quantity}` },
-              { label: 'Sale Net Price', value: saleNet, onChange: setSaleNet, hint: `Purchase: $${selected.netPrice.toFixed(2)}` },
-              { label: 'Sale Gross Price', value: saleGross, onChange: setSaleGross, hint: `Purchase: $${selected.grossPrice.toFixed(2)}` },
+              { label: 'Cantidad', value: qty, onChange: setQty, hint: `Máx: ${selected.quantity}` },
+              { label: 'Precio neto venta', value: saleNet, onChange: setSaleNet, hint: `Compra: $${selected.netPrice.toFixed(2)}` },
+              { label: 'Precio bruto venta', value: saleGross, onChange: setSaleGross, hint: `Compra: $${selected.grossPrice.toFixed(2)}` },
             ].map((f) => (
               <View key={f.label}>
                 <View style={saleModalStyles.labelRow}>
@@ -180,7 +180,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
               <View style={[saleModalStyles.marginBox, { backgroundColor: theme.success + '18' }]}>
                 <Ionicons name="trending-up" size={16} color={theme.success} />
                 <Text style={[saleModalStyles.marginText, { color: theme.success }]}>
-                  Margin: ${((parseFloat(saleGross) - selected.grossPrice) * (parseInt(qty) || 1)).toFixed(2)} total
+                  Margen: ${((parseFloat(saleGross) - selected.grossPrice) * (parseInt(qty) || 1)).toFixed(2)} total
                 </Text>
               </View>
             )}
@@ -191,7 +191,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
               style={[saleModalStyles.submitBtn, { backgroundColor: theme.accent, opacity: loading ? 0.8 : 1 }]}
             >
               <Ionicons name="checkmark-circle" size={20} color="#0D1117" />
-              <Text style={saleModalStyles.submitText}>{loading ? 'Registering...' : 'Confirm Sale'}</Text>
+              <Text style={saleModalStyles.submitText}>{loading ? 'Registrando...' : 'Confirmar venta'}</Text>
             </Pressable>
           </ScrollView>
         )}
@@ -293,17 +293,17 @@ export default function TodayScreen() {
     try {
       await startWorkDay();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Work day started', 'success');
+      showToast('Jornada iniciada', 'success');
     } catch (e: any) {
       showToast(e.message, 'error');
     }
   };
 
   const handleEnd = () => {
-    Alert.alert('End Work Day', 'This will finalize today\'s sales and generate a report.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('Finalizar jornada', 'Esto finalizará las ventas de hoy y generará un informe.', [
+      { text: 'Cancelar', style: 'cancel' },
       {
-        text: 'End Day', style: 'destructive', onPress: async () => {
+        text: 'Finalizar', style: 'destructive', onPress: async () => {
           setEnding(true);
           const report = await endWorkDay();
           setEnding(false);
@@ -317,9 +317,9 @@ export default function TodayScreen() {
   };
 
   const handleDeleteSale = (id: string) => {
-    Alert.alert('Remove Sale', 'Remove this sale? Stock will be restored.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => deleteSale(id) },
+    Alert.alert('Eliminar venta', '¿Eliminar esta venta? El stock será restaurado.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: () => deleteSale(id) },
     ]);
   };
 
@@ -327,30 +327,30 @@ export default function TodayScreen() {
     return (
       <View style={[styles.root, { backgroundColor: theme.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-          <Text style={[styles.title, { color: theme.text }]}>Today</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Hoy</Text>
           <Text style={[styles.sub, { color: theme.textSecondary }]}>
-            {new Date().toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('es', { weekday: 'long', month: 'long', day: 'numeric' })}
           </Text>
         </View>
         <View style={styles.startCenter}>
           <View style={[styles.startIcon, { backgroundColor: theme.accent + '18' }]}>
             <Ionicons name="storefront-outline" size={64} color={theme.accent} />
           </View>
-          <Text style={[styles.startTitle, { color: theme.text }]}>Ready to start?</Text>
+          <Text style={[styles.startTitle, { color: theme.text }]}>¿Listo para empezar?</Text>
           <Text style={[styles.startSub, { color: theme.textSecondary }]}>
-            Start your work day to track sales and monitor real-time revenue
+            Inicia tu jornada para registrar ventas y monitorear ingresos en tiempo real
           </Text>
           {lowStockCount > 0 && (
             <View style={[styles.lowAlert, { backgroundColor: theme.warning + '18' }]}>
               <Ionicons name="warning" size={16} color={theme.warning} />
               <Text style={[styles.lowAlertText, { color: theme.warning }]}>
-                {lowStockCount} product{lowStockCount > 1 ? 's' : ''} running low
+                {lowStockCount} producto{lowStockCount > 1 ? 's' : ''} con stock bajo
               </Text>
             </View>
           )}
           <Pressable onPress={handleStart} style={[styles.startBtn, { backgroundColor: theme.accent }]}>
             <Ionicons name="play-circle" size={22} color="#0D1117" />
-            <Text style={styles.startBtnText}>Start Work Day</Text>
+            <Text style={styles.startBtnText}>Iniciar jornada</Text>
           </Pressable>
         </View>
       </View>
@@ -362,15 +362,15 @@ export default function TodayScreen() {
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={[styles.title, { color: theme.text }]}>Today</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Hoy</Text>
             <Text style={[styles.sub, { color: theme.textSecondary }]}>
-              {new Date().toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString('es', { weekday: 'long', month: 'long', day: 'numeric' })}
             </Text>
           </View>
           <View style={styles.headerActions}>
             <View style={[styles.activeBadge, { backgroundColor: theme.success + '22' }]}>
               <View style={[styles.activeDot, { backgroundColor: theme.success }]} />
-              <Text style={[styles.activeText, { color: theme.success }]}>Active</Text>
+              <Text style={[styles.activeText, { color: theme.success }]}>Activo</Text>
             </View>
             <Pressable
               onPress={handleEnd}
@@ -378,16 +378,16 @@ export default function TodayScreen() {
               style={[styles.endBtn, { borderColor: theme.danger }]}
             >
               <Ionicons name="stop-circle-outline" size={16} color={theme.danger} />
-              <Text style={[styles.endText, { color: theme.danger }]}>End Day</Text>
+              <Text style={[styles.endText, { color: theme.danger }]}>Terminar</Text>
             </Pressable>
           </View>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsRow}>
-          <StatCard label="Items Sold" value={stats.items} icon="bag-outline" color={theme.accent} theme={theme} />
-          <StatCard label="Net Revenue" value={`$${stats.net.toFixed(2)}`} icon="arrow-up-circle-outline" color={theme.info} theme={theme} />
-          <StatCard label="Gross Revenue" value={`$${stats.gross.toFixed(2)}`} icon="cash-outline" color={theme.success} theme={theme} />
-          <StatCard label="Profit" value={`$${stats.profit.toFixed(2)}`} icon="trending-up-outline" color={stats.profit >= 0 ? theme.success : theme.danger} theme={theme} />
+          <StatCard label="Artículos vendidos" value={stats.items} icon="bag-outline" color={theme.accent} theme={theme} />
+          <StatCard label="Ingreso neto" value={`$${stats.net.toFixed(2)}`} icon="arrow-up-circle-outline" color={theme.info} theme={theme} />
+          <StatCard label="Ingreso bruto" value={`$${stats.gross.toFixed(2)}`} icon="cash-outline" color={theme.success} theme={theme} />
+          <StatCard label="Ganancia" value={`$${stats.profit.toFixed(2)}`} icon="trending-up-outline" color={stats.profit >= 0 ? theme.success : theme.danger} theme={theme} />
         </ScrollView>
       </View>
 
@@ -400,15 +400,15 @@ export default function TodayScreen() {
         ListHeaderComponent={
           <View style={styles.listHeader}>
             <Text style={[styles.listHeaderText, { color: theme.textSecondary }]}>
-              {daySales.length} sale{daySales.length !== 1 ? 's' : ''} today
+              {daySales.length} venta{daySales.length !== 1 ? 's' : ''} hoy
             </Text>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="receipt-outline" size={48} color={theme.textTertiary} />
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>No sales yet</Text>
-            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Tap the + button to register your first sale</Text>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin ventas aún</Text>
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Toca el botón + para registrar tu primera venta</Text>
           </View>
         }
         renderItem={({ item, index }) => (
@@ -431,18 +431,18 @@ export default function TodayScreen() {
         <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setReportModal(null)}>
           <ScrollView style={{ flex: 1, backgroundColor: theme.background }} contentContainerStyle={{ padding: 24, paddingTop: insets.top + 24, gap: 20, paddingBottom: 60 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={[styles.title, { color: theme.text }]}>Day Summary</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Resumen del día</Text>
               <Pressable onPress={() => setReportModal(null)}>
                 <Ionicons name="close" size={24} color={theme.textTertiary} />
               </Pressable>
             </View>
             {[
-              { label: 'Items Sold', value: reportModal.totalItemsSold },
-              { label: 'Net Revenue', value: `$${reportModal.totalNetRevenue.toFixed(2)}` },
-              { label: 'Gross Revenue', value: `$${reportModal.totalGrossRevenue.toFixed(2)}` },
-              { label: 'Profit', value: `$${reportModal.estimatedProfit.toFixed(2)}` },
-              { label: 'Stock Products', value: reportModal.stockSnapshot.totalProducts },
-              { label: 'Stock Value', value: `$${reportModal.stockSnapshot.totalValue.toFixed(2)}` },
+              { label: 'Artículos vendidos', value: reportModal.totalItemsSold },
+              { label: 'Ingreso neto', value: `$${reportModal.totalNetRevenue.toFixed(2)}` },
+              { label: 'Ingreso bruto', value: `$${reportModal.totalGrossRevenue.toFixed(2)}` },
+              { label: 'Ganancia', value: `$${reportModal.estimatedProfit.toFixed(2)}` },
+              { label: 'Productos en stock', value: reportModal.stockSnapshot.totalProducts },
+              { label: 'Valor del stock', value: `$${reportModal.stockSnapshot.totalValue.toFixed(2)}` },
             ].map((r) => (
               <View key={r.label} style={[styles.reportRow, { borderBottomColor: theme.separator }]}>
                 <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>{r.label}</Text>
@@ -450,7 +450,7 @@ export default function TodayScreen() {
               </View>
             ))}
             <Pressable onPress={() => setReportModal(null)} style={[styles.startBtn, { backgroundColor: theme.accent, marginTop: 8 }]}>
-              <Text style={styles.startBtnText}>Done</Text>
+              <Text style={styles.startBtnText}>Listo</Text>
             </Pressable>
           </ScrollView>
         </Modal>
@@ -478,16 +478,16 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 60, gap: 10 },
   emptyTitle: { fontSize: 17, fontFamily: 'Inter_600SemiBold' },
   emptyText: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', paddingHorizontal: 40 },
-  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#F5A623', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 },
+  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 },
   startCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 16 },
-  startIcon: { width: 120, height: 120, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  startIcon: { width: 120, height: 120, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
   startTitle: { fontSize: 26, fontFamily: 'Inter_700Bold', textAlign: 'center' },
   startSub: { fontSize: 15, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
-  lowAlert: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
-  lowAlertText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
-  startBtn: { height: 54, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32, marginTop: 8 },
+  lowAlert: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
+  lowAlertText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
+  startBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 54, borderRadius: 16, paddingHorizontal: 32 },
   startBtnText: { fontSize: 17, fontFamily: 'Inter_600SemiBold', color: '#0D1117' },
-  reportRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1 },
+  reportRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
   reportLabel: { fontSize: 15, fontFamily: 'Inter_400Regular' },
-  reportValue: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+  reportValue: { fontSize: 16, fontFamily: 'Inter_700Bold' },
 });

@@ -1,7 +1,7 @@
-# StockPilot — Inventory Management App
+# StockPilot — App de Gestión de Inventario
 
 ## Overview
-A cross-platform mobile inventory management app built with React Native + Expo (managed workflow). Full-featured stock, sales, orders, and analytics management.
+A cross-platform mobile inventory management app built with React Native + Expo (managed workflow). Full-featured stock, sales, orders, and analytics management. **Entire UI is in Spanish** with categories tailored for hardware stores (ferreterías) and auto parts shops (refaccionarias).
 
 ## Tech Stack
 - **Frontend**: React Native + Expo (SDK 54), Expo Router (file-based routing)
@@ -10,7 +10,7 @@ A cross-platform mobile inventory management app built with React Native + Expo 
 - **State**: React Context (AuthContext, InventoryContext) + React Query
 - **UI**: Inter font (@expo-google-fonts/inter), expo-blur, react-native-reanimated
 - **Camera**: expo-camera (barcode scanning), expo-image-picker (OCR photos)
-- **OCR**: Google Cloud Vision API (optional, set EXPO_PUBLIC_GOOGLE_VISION_API_KEY)
+- **OCR**: Google Cloud Vision API (optional, set EXPO_PUBLIC_GOOGLE_VISION_API_KEY) — extracts name, brand, serial, barcode, price from product label photos
 - **Charts**: Custom SVG bar charts via react-native-svg
 
 ## App Structure
@@ -19,37 +19,41 @@ app/
   _layout.tsx          # Root layout — fonts, providers (Auth, Inventory, Toast, React Query)
   (auth)/
     _layout.tsx
-    login.tsx          # Email/password login
-    register.tsx       # Account registration
+    login.tsx          # Inicio de sesión
+    register.tsx       # Crear cuenta
   (tabs)/
     _layout.tsx        # 5-tab layout (NativeTabs iOS 26+ / Classic fallback)
-    index.tsx          # Stock screen — product list, search, filter, bulk actions
-    scan.tsx           # Barcode scanner + OCR via Google Vision
-    today.tsx          # Work day — start/end, register sales, live dashboard
-    orders.tsx         # Order management — add/receive incoming stock
-    reports.tsx        # Analytics — charts, top products, daily report history
+    index.tsx          # Inventario — lista de productos, búsqueda, filtros, acciones masivas
+    scan.tsx           # Escáner de código de barras + OCR de etiquetas (Google Vision)
+    today.tsx          # Hoy — jornada, registrar ventas, panel en tiempo real
+    orders.tsx         # Pedidos — agregar/recibir stock entrante
+    reports.tsx        # Informes — gráficos, productos más vendidos, historial de reportes
   product/
-    new.tsx            # Add product (modal)
-    [id].tsx           # Product detail/edit (modal)
+    new.tsx            # Agregar producto (modal) — acepta datos pre-llenados del OCR
+    [id].tsx           # Detalle/edición de producto (modal)
 
 contexts/
-  AuthContext.tsx      # User auth (AsyncStorage-backed)
-  InventoryContext.tsx # Products, sales, work days, orders, reports
+  AuthContext.tsx      # Autenticación (AsyncStorage)
+  InventoryContext.tsx # Productos, ventas, jornadas, pedidos, informes
 
 components/
-  Toast.tsx            # Toast notification system
-  BarChart.tsx         # SVG bar chart component
+  Toast.tsx            # Sistema de notificaciones toast
+  BarChart.tsx         # Componente de gráfico de barras SVG
   ErrorBoundary.tsx    # Error boundary wrapper
+  ErrorFallback.tsx    # Pantalla de error (en español)
 ```
 
 ## Key Features
-1. **Authentication** — Email/password, stored locally
-2. **Stock Management** — CRUD, search, category filters, low-stock alerts, price history, bulk delete
-3. **Barcode Scanner** — Real-time barcode scanning via expo-camera
-4. **OCR** — Google Cloud Vision API text extraction for auto-filling product fields
-5. **Work Day / Sales** — Start/end day, register sales, real-time P&L dashboard
-6. **Orders** — Track incoming stock, confirm receipt (auto-updates inventory)
-7. **Reports** — Weekly/monthly revenue charts, top products, day report history
+1. **Autenticación** — Correo/contraseña, almacenado localmente
+2. **Gestión de inventario** — CRUD, búsqueda, filtros por categoría, alertas de stock bajo, historial de precios, eliminación masiva
+3. **Escáner de código de barras** — Escaneo en tiempo real vía expo-camera
+4. **OCR** — Google Cloud Vision API extrae 5 campos de etiquetas: nombre, marca, serie, código de barras, precio
+5. **Jornada / Ventas** — Iniciar/finalizar día, registrar ventas, panel de P&L en tiempo real
+6. **Pedidos** — Rastrear stock entrante, confirmar recepción (actualiza inventario automáticamente)
+7. **Informes** — Gráficos semanales/mensuales de ingresos, productos más vendidos, historial de reportes diarios
+
+## Categories (Spanish, for ferreterías/refaccionarias)
+Herramientas Manuales, Herramientas Eléctricas, Tornillería y Fijación, Pintura y Acabados, Plomería, Electricidad, Ferretería General, Accesorios Automotriz, Aceites y Lubricantes, Filtros y Refacciones, Llantas y Rines, Iluminación Vehicular, Baterías y Carga, Seguridad Industrial, Jardín y Exterior, Otro
 
 ## Environment Variables
 - `EXPO_PUBLIC_GOOGLE_VISION_API_KEY` — Optional; enables OCR from product photos
@@ -64,3 +68,4 @@ components/
 - Typography: Inter (400, 500, 600, 700)
 - Border radius: 12–18px for cards
 - Tab bar: NativeTabs with liquid glass on iOS 26+, BlurView fallback
+- Language: 100% Spanish UI
