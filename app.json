@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "StockPilot",
-    "slug": "stockpilot",
+    "name": "StockSudAuto",
+    "slug": "stocksudauto",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "stockpilot",
+    "scheme": "stocksudauto",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,15 +15,17 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.stockpilot",
+      "bundleIdentifier": "com.stocksudauto.app",
       "infoPlist": {
         "NSCameraUsageDescription": "StockPilot uses the camera to scan barcodes and take product photos for OCR recognition.",
         "NSPhotoLibraryUsageDescription": "StockPilot needs access to your photo library to attach product images."
       }
     },
     "android": {
-      "package": "com.stockpilot",
-      "permissions": ["android.permission.CAMERA"],
+      "package": "com.stocksudauto.app",
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#0D1117",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
