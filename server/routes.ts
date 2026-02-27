@@ -1,16 +1,5 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
-import { GoogleGenAI } from "@google/genai";
-
-function getAIClient() {
-  const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
-  const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
-  if (!apiKey || !baseUrl) return null;
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: { apiVersion: "", baseUrl },
-  });
-}
 
 function detectMimeType(base64: string): { mimeType: string; data: string } {
   let data = base64;
@@ -49,9 +38,9 @@ function extractJSON(text: string): Record<string, string> {
 export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ocr", async (req, res) => {
     try {
-      const ai = getAIClient();
-      if (!ai) {
-        return res.status(503).json({ error: "OCR service not configured" });
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return res.status(503).json({ error: "OCR service not configured: OPENAI_API_KEY missing" });
       }
 
       const { base64 } = req.body;
@@ -64,18 +53,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { mimeType, data } = detectMimeType(base64);
+      const imageUrl = `data:${mimeType};base64,${data}`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                inlineData: { mimeType, data },
-              },
-              {
-                text: `Analiza esta imagen de una etiqueta de producto. Extrae la siguiente información y responde SOLO con un objeto JSON válido:
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          max_tokens: 1024,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image_url",
+                  image_url: { url: imageUrl, detail: "high" },
+                },
+                {
+                  type: "text",
+                  text: `Analiza esta imagen de una etiqueta de producto. Extrae la siguiente información y responde SOLO con un objeto JSON válido:
 {
   "name": "nombre del producto",
   "brand": "marca del producto",
@@ -84,17 +84,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   "price": "precio numérico sin símbolo de moneda, usar punto como separador decimal"
 }
 Si no encuentras algún campo, usa cadena vacía "". No inventes datos que no estén visibles en la imagen.`,
-              },
-            ],
-          },
-        ],
-        config: {
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
-        },
+                },
+              ],
+            },
+          ],
+        }),
       });
 
-      const text = response.text || "";
+      if (!response.ok) {
+        const errBody = await response.text();
+        console.error("OpenAI API error:", response.status, errBody);
+        return res.status(502).json({ error: "OCR provider returned an error" });
+      }
+
+      const json = await response.json() as any;
+      const text = json.choices?.[0]?.message?.content || "";
       const parsed = extractJSON(text);
 
       res.json({

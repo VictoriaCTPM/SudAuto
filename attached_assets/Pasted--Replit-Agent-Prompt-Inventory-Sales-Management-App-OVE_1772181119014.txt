@@ -1,0 +1,496 @@
+# Replit Agent Prompt — Inventory & Sales Management App
+
+## OVERVIEW
+
+Build a cross-platform mobile inventory and sales management app for a small retail business. The app runs on Android and iOS. It tracks stock, daily sales, orders, and generates reports. The primary input method is camera (scan labels, barcodes, shelves) powered by Claude AI vision API. Secondary input is voice and manual entry.
+
+## TECH STACK (use exactly these, no substitutions)
+
+- **Framework:** React Native with Expo (managed workflow, SDK 51+)
+- **Navigation:** expo-router (file-based routing with bottom tabs)
+- **Database:** Supabase (PostgreSQL + Auth + Storage for photos)
+- **Offline cache:** expo-sqlite for offline mode, sync to Supabase when online
+- **Camera:** expo-camera (photos + barcode scanning in ONE unified scanner screen)
+- **OCR/AI:** Claude API (claude-sonnet-4-5-20250929 with vision) — called from backend only, never from client
+- **Voice:** expo-speech-recognition for voice-to-text on Orders screen
+- **Excel export:** xlsx library (SheetJS)
+- **PDF export:** expo-print + expo-sharing
+- **Charts:** victory-native for sales analytics
+- **State management:** zustand
+- **Styling:** nativewind (Tailwind for React Native)
+
+## ENVIRONMENT VARIABLES (Replit Secrets)
+
+```
+ANTHROPIC_API_KEY=user_will_add
+SUPABASE_URL=user_will_add
+SUPABASE_ANON_KEY=user_will_add
+```
+
+## DATABASE SCHEMA (Supabase PostgreSQL)
+
+```sql
+-- Product categories
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Main products table (stock)
+CREATE TABLE products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  name TEXT NOT NULL,
+  brand TEXT,
+  serial_number TEXT,
+  barcode TEXT,
+  category_id UUID REFERENCES categories(id),
+  quantity INTEGER DEFAULT 0,
+  min_quantity INTEGER DEFAULT 2,
+  netto_price DECIMAL(10,2),
+  brutto_price DECIMAL(10,2),
+  photo_url TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Price history for tracking changes
+CREATE TABLE price_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  netto_price DECIMAL(10,2),
+  brutto_price DECIMAL(10,2),
+  changed_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Daily work sessions
+CREATE TABLE work_days (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  date DATE NOT NULL,
+  started_at TIMESTAMPTZ DEFAULT now(),
+  ended_at TIMESTAMPTZ,
+  is_closed BOOLEAN DEFAULT false,
+  total_sold_count INTEGER DEFAULT 0,
+  total_netto DECIMAL(10,2) DEFAULT 0,
+  total_brutto DECIMAL(10,2) DEFAULT 0,
+  total_profit DECIMAL(10,2) DEFAULT 0,
+  notes TEXT
+);
+
+-- Sales records
+CREATE TABLE sales (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  work_day_id UUID REFERENCES work_days(id),
+  product_id UUID REFERENCES products(id),
+  product_name TEXT NOT NULL,
+  product_brand TEXT,
+  quantity INTEGER DEFAULT 1,
+  purchase_netto DECIMAL(10,2),
+  purchase_brutto DECIMAL(10,2),
+  sale_netto DECIMAL(10,2),
+  sale_brutto DECIMAL(10,2),
+  profit DECIMAL(10,2),
+  sold_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Orders for next day
+CREATE TABLE orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  work_day_id UUID REFERENCES work_days(id),
+  product_name TEXT NOT NULL,
+  product_brand TEXT,
+  quantity INTEGER DEFAULT 1,
+  expected_netto DECIMAL(10,2),
+  expected_brutto DECIMAL(10,2),
+  supplier TEXT,
+  status TEXT DEFAULT 'ordered' CHECK (status IN ('ordered', 'received', 'partial', 'cancelled')),
+  product_id UUID REFERENCES products(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+## APP STRUCTURE (file-based routing)
+
+```
+app/
+├── _layout.tsx              ← Root layout with auth check
+├── (auth)/
+│   ├── login.tsx            ← Email/password login
+│   └── register.tsx         ← Registration
+├── (tabs)/
+│   ├── _layout.tsx          ← Bottom tab navigator (5 tabs)
+│   ├── stock/
+│   │   ├── index.tsx        ← Stock list with search, filters, low stock alerts
+│   │   ├── [id].tsx         ← Product detail/edit screen
+│   │   └── add.tsx          ← Add product screen (manual entry fallback)
+│   ├── scan.tsx             ← UNIFIED scanner screen (camera + barcode)
+│   ├── today/
+│   │   ├── index.tsx        ← Daily sales dashboard
+│   │   └── summary.tsx      ← End of day report
+│   ├── orders/
+│   │   ├── index.tsx        ← Orders list + voice input
+│   │   └── receive.tsx      ← Confirm received orders → add to stock
+│   └── reports/
+│       └── index.tsx        ← Charts, history, export
+├── scanner/
+│   └── index.tsx            ← Full screen scanner (reusable, called with context param)
+```
+
+## SCREEN-BY-SCREEN SPECIFICATIONS
+
+### 1. UNIFIED SCANNER SCREEN (`scan.tsx` and `scanner/index.tsx`)
+
+THIS IS THE MOST IMPORTANT SCREEN. It must handle ALL scanning scenarios through ONE interface.
+
+**How it works:**
+
+- Full screen camera view with a semi-transparent overlay
+- At the bottom: 3 mode toggle buttons: “Barcode” | “Label” | “Shelf”
+- Above the buttons: context selector: “Add to Stock” | “Sell” (two big toggle buttons)
+- The scanner is opened from multiple places but always looks the same
+
+**Barcode mode:**
+
+- Uses expo-camera barcode scanner (onBarCodeScanned)
+- Scans EAN-13, EAN-8, UPC-A, UPC-E, Code128, QR
+- On scan: vibrate phone, search database for matching barcode
+- If found: show product card overlay with name, brand, photo, current quantity, price
+  - If context is “Add to Stock”: show quantity input (+/- buttons, default 1), confirm button → adds to stock quantity
+  - If context is “Sell”: show quantity input (default 1), sale price fields (netto/brutto, pre-filled from product data), confirm → creates sale record, decrements stock
+- If NOT found: prompt “Product not in database. Take label photo to add?” → switches to Label mode
+
+**Label mode:**
+
+- User takes photo of product label/box
+- Show “Processing…” overlay with spinner
+- Send photo to Claude API backend endpoint
+- Claude returns: {name, brand, serial_number, barcode_if_visible}
+- Show parsed results in editable card overlay:
+  - Product Name (pre-filled, editable)
+  - Brand (pre-filled, editable)
+  - Serial Number (pre-filled, editable)
+  - Barcode (pre-filled, editable)
+  - Category (dropdown)
+  - Quantity (number input)
+  - Netto price (number input)
+  - Brutto price (number input)
+- “Save” button:
+  - If context is “Add to Stock”: creates new product in database
+  - If context is “Sell”: creates product + immediately creates sale record
+
+**Shelf mode (multi-scan):**
+
+- User takes photo of entire shelf/display
+- Send to Claude API with special prompt for multi-product detection
+- Claude returns array of products: [{name, brand, estimated_quantity}]
+- Show scrollable list of detected products, each with checkbox and editable quantity
+- User reviews, unchecks wrong detections, adjusts quantities
+- “Add All to Stock” button → batch insert/update
+
+**CRITICAL:** The scanner must feel fast. Show camera preview immediately. Process in background. Use haptic feedback on successful scan.
+
+### 2. STOCK SCREEN (`stock/index.tsx`)
+
+**Top section:**
+
+- Search bar (searches name, brand, barcode, serial number simultaneously)
+- Filter chips: All | Low Stock | By Category (expandable)
+- Sort: Name A-Z | Price ↑↓ | Quantity ↑↓ | Recently added
+
+**Product list:**
+
+- Each row shows: small photo thumbnail (40x40), product name (bold), brand (gray), quantity badge, brutto price
+- Quantity badge is RED if below min_quantity
+- Swipe left on row → Delete button (with confirmation alert)
+- Swipe right on row → Quick quantity adjustment (+/- buttons appear)
+- Tap row → opens product detail screen
+
+**Product detail screen (`stock/[id].tsx`):**
+
+- Full product photo (tappable to view full screen)
+- All editable fields: name, brand, serial_number, barcode, category, quantity, min_quantity, netto, brutto, notes
+- Price history section (collapsible): shows timeline of price changes
+- “Retake Photo” button → opens camera
+- “Delete Product” button at bottom (red, with confirmation)
+- Auto-save on field change (debounced 500ms) or explicit “Save” button
+
+**Floating Action Button (bottom right):**
+
+- Tap → opens scanner in “Add to Stock” context
+- Long press → opens manual add form (stock/add.tsx)
+
+### 3. TODAY / DAILY SALES SCREEN (`today/index.tsx`)
+
+**If no work day started:**
+
+- Big “Start Work Day” button in center
+- Tapping it creates a new work_day record
+
+**Active work day view:**
+
+**Top stats bar (always visible, sticky):**
+
+- Items Sold: [count]
+- Netto: [sum] €
+- Brutto: [sum] €
+- Profit: [sum] €
+
+**Sales list (scrollable):**
+
+- Each row: product name, brand, quantity × sale_brutto, time of sale
+- Tap row → see sale details (purchase price vs sale price, profit)
+- Swipe left → cancel sale (returns item to stock, removes sale record, with confirmation)
+
+**Bottom section:**
+
+- Orders for today (items that were ordered yesterday, collapsible)
+- “Scan to Sell” FAB button → opens scanner in “Sell” context
+
+**“End Day” button (top right):**
+
+- Shows confirmation: “Close day? You won’t be able to add more sales.”
+- On confirm → navigates to summary screen
+
+### 4. END OF DAY SUMMARY (`today/summary.tsx`)
+
+**Header:** Date, work hours (started_at to ended_at)
+
+**Sales summary card:**
+
+- Total items sold: [count]
+- Itemized list: each product, quantity, sale price
+- Total Netto: [sum]
+- Total Brutto: [sum]
+- Total Profit: [sum]
+
+**Orders summary card:**
+
+- Items ordered for tomorrow: [count]
+- Itemized list with expected costs
+
+**Stock snapshot card:**
+
+- Total products in stock: [count]
+- Total stock value (at brutto): [sum]
+- Low stock warnings: [list of products below minimum]
+
+**Comparison with previous day:**
+
+- Sold more/less than yesterday: +X / -X items
+- Revenue change: +/- €
+
+**Action buttons:**
+
+- “Export as PDF” → generates PDF, opens share sheet
+- “Export as Excel” → generates .xlsx, opens share sheet
+- “Back to Main” → navigates to today screen (now shows closed day summary)
+
+### 5. ORDERS SCREEN (`orders/index.tsx`)
+
+**Top section:**
+
+- Toggle: “Active Orders” | “Order History”
+
+**Active orders list:**
+
+- Each row: product name, quantity, expected price, status badge
+- Tap row → edit order details
+- Swipe right → mark as “Received” (adds to stock automatically)
+
+**VOICE INPUT SECTION (this is the key feature):**
+
+- Big microphone button at bottom center
+- Tap to start recording, tap again to stop (or auto-stop after 3 sec silence)
+- While recording: pulsing red indicator, live transcription text appearing
+- Uses expo-speech-recognition
+- After recording stops: send transcribed text to Claude API with prompt to parse into structured order items
+- Example: user says “три ред булл, пять кока-кола полтора литра, десять пачек мальборо”
+- Claude returns: [{name: “Red Bull”, quantity: 3}, {name: “Coca-Cola 1.5L”, quantity: 5}, {name: “Marlboro”, quantity: 10}]
+- Show parsed items as editable cards
+- Each card: product name (editable), quantity (editable +/-), match indicator (if found in stock database)
+- “Add All Orders” button → saves to orders table
+- If product matches existing stock item, link the order to that product_id
+
+**Voice input must support Russian language (locale: ru-RU)**
+
+### 6. REPORTS SCREEN (`reports/index.tsx`)
+
+**Period selector:** Today | This Week | This Month | Custom Range
+
+**Charts section:**
+
+- Daily revenue bar chart (brutto)
+- Daily profit line chart
+- Top 5 selling products (horizontal bar chart)
+
+**Summary stats for selected period:**
+
+- Total items sold
+- Total revenue (netto / brutto)
+- Total profit
+- Average daily revenue
+- Best selling product
+- Worst selling product
+
+**Past daily reports:**
+
+- Scrollable list of closed work days
+- Tap → view that day’s full summary (reuses summary.tsx layout)
+
+**Export buttons:**
+
+- “Export Stock to Excel” → full current stock database
+- “Export Sales History to Excel” → all sales for selected period
+- “Export Report as PDF” → formatted report for selected period
+
+## BACKEND API ENDPOINTS (Express.js server in Replit)
+
+```
+POST /api/scan/label
+  - Receives: base64 image
+  - Sends to Claude API with prompt:
+    "Analyze this product label photo. Extract and return ONLY valid JSON:
+    {\"name\": \"product name\", \"brand\": \"brand name\", \"serial_number\": \"if visible or null\", \"barcode\": \"if visible or null\"}
+    If you cannot identify a field, set it to null. Do not add any text outside the JSON."
+  - Returns: parsed JSON to client
+
+POST /api/scan/shelf
+  - Receives: base64 image
+  - Sends to Claude API with prompt:
+    "Analyze this shelf/display photo. Identify ALL visible products and estimate quantities.
+    Return ONLY valid JSON array:
+    [{\"name\": \"product name\", \"brand\": \"brand\", \"estimated_quantity\": number}]
+    Only include products you can clearly identify. Do not guess. Do not add text outside JSON."
+  - Returns: parsed JSON array to client
+
+POST /api/voice/parse-orders
+  - Receives: { text: "transcribed voice text" }
+  - Sends to Claude API with prompt:
+    "Parse this order dictation into structured items. The text is in Russian.
+    Input: {text}
+    Return ONLY valid JSON array:
+    [{\"name\": \"product name in original language\", \"quantity\": number}]
+    If quantity is not mentioned, default to 1. Do not add text outside JSON."
+  - Returns: parsed JSON array to client
+```
+
+**IMPORTANT for Claude API calls:**
+
+- Model: claude-sonnet-4-5-20250929
+- Max tokens: 1024 (enough for product data, saves cost)
+- For image inputs: resize photos to max 1024px before sending (saves API cost)
+- Wrap all API calls in try/catch, return manual entry form on any error
+- Add request timeout of 15 seconds
+
+## AUTHENTICATION FLOW
+
+1. App opens → check Supabase session
+1. No session → show Login screen
+1. Login with email/password via Supabase Auth
+1. On success → navigate to (tabs)
+1. Session persists across app restarts
+1. Logout button in Reports screen header
+
+## OFFLINE MODE
+
+- On app start: sync all products from Supabase to local SQLite
+- All reads come from local SQLite (fast)
+- All writes go to BOTH local SQLite AND Supabase
+- If Supabase write fails (no internet): queue the operation
+- When internet returns: process queue in order
+- Show small “offline” badge in header when no connection
+- Use NetInfo from @react-native-community/netinfo to detect connectivity
+
+## UI DESIGN SPECIFICATIONS
+
+**Color scheme:**
+
+- Primary: #2563EB (blue)
+- Success/Stock: #16A34A (green)
+- Warning/Low stock: #F59E0B (amber)
+- Danger/Delete: #DC2626 (red)
+- Background: #F8FAFC (light gray)
+- Cards: #FFFFFF with subtle shadow
+- Text primary: #1E293B
+- Text secondary: #64748B
+
+**Typography:**
+
+- Headers: 24px bold
+- Subheaders: 18px semibold
+- Body: 16px regular
+- Caption: 14px regular, secondary color
+
+**Bottom tabs:**
+
+1. Stock (icon: package/box)
+1. Scan (icon: camera — larger, centered, primary color)
+1. Today (icon: shopping-cart)
+1. Orders (icon: truck)
+1. Reports (icon: bar-chart)
+
+**General:**
+
+- All touch targets minimum 44x44px
+- Loading skeletons instead of spinners for lists
+- Pull-to-refresh on all list screens
+- Haptic feedback on scan success and button presses
+- All monetary values show 2 decimal places with € symbol
+- All timestamps in 24h format
+- All dates in DD.MM.YYYY format (European)
+
+## ERROR HANDLING
+
+- Network errors: show toast “No connection, saved locally” and queue sync
+- Claude API errors: show toast “AI unavailable, please enter manually” and show manual form
+- Camera permission denied: show explanation screen with button to open settings
+- Microphone permission denied: show explanation and fallback to manual text input
+- Empty scan result: show “Could not recognize. Try again or enter manually”
+- Supabase auth errors: show specific message (wrong password, user not found, etc.)
+
+## WHAT TO BUILD FIRST (build in this exact order)
+
+1. Supabase setup: create all tables, enable auth, create storage bucket “product-photos”
+1. Auth screens (login/register) — test that auth works
+1. Express backend with 3 Claude API endpoints — test with hardcoded images
+1. Unified scanner screen with barcode + label modes — test camera and API
+1. Stock screen (list + detail + add) — test CRUD operations
+1. Today screen (start day, scan to sell, sales list) — test sales flow
+1. End of day summary — test report generation
+1. Orders screen with voice input — test voice recognition + Claude parsing
+1. Reports screen with charts and export — test Excel and PDF generation
+1. Offline mode — test queue and sync
+1. Shelf scan mode — test multi-product detection
+1. Polish: loading states, error handling, haptic feedback, animations
+
+## TESTING CHECKLIST (verify each works before moving to next)
+
+- [ ] Can register and login
+- [ ] Camera opens and scans barcodes
+- [ ] Can take label photo and get parsed data from Claude
+- [ ] Can add product to stock via scan
+- [ ] Can view, edit, delete products in stock list
+- [ ] Can start work day
+- [ ] Can scan product to sell (barcode finds it in stock, decrements quantity)
+- [ ] Can see daily sales totals updating in real time
+- [ ] Can close day and see summary with all correct totals
+- [ ] Can dictate orders by voice in Russian and get parsed list
+- [ ] Can export stock to Excel
+- [ ] Can export daily report to PDF
+- [ ] App works without internet (basic operations)
+- [ ] Charts show correct data on reports screen
+
+## CRITICAL REMINDERS
+
+- NEVER expose ANTHROPIC_API_KEY on the client side. All Claude API calls go through Express backend.
+- ALWAYS resize images before sending to Claude API (max 1024px longest side) to minimize API costs.
+- ALWAYS set max_tokens to 1024 for Claude API calls.
+- ALWAYS validate and sanitize Claude API JSON responses before using them.
+- Use Supabase Row Level Security (RLS) so users only see their own data.
+- The app language is Russian (UI labels, buttons, placeholders). Currency is Euro (€).
+- Date format: DD.MM.YYYY, Time format: 24h.
