@@ -214,7 +214,7 @@ export default function ProductDetailScreen() {
                 { label: 'Marca', value: product.brand || '—' },
                 { label: 'Categoría', value: product.category },
                 { label: 'Precio neto', value: `$${product.netPrice.toFixed(2)}` },
-                { label: 'Precio bruto', value: `$${product.grossPrice.toFixed(2)}` },
+                { label: 'Precio de venta', value: `$${product.grossPrice.toFixed(2)}` },
                 { label: 'Alerta stock bajo', value: product.minQuantity },
                 { label: 'Serie / SKU', value: product.serialNumber || '—' },
                 { label: 'Código de barras', value: product.barcode || '—' },
@@ -263,7 +263,7 @@ export default function ProductDetailScreen() {
                   <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.netPrice} onChangeText={(v) => set('netPrice', v)} keyboardType="decimal-pad" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Precio bruto ($)</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Precio de venta ($)</Text>
                   <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.grossPrice} onChangeText={(v) => set('grossPrice', v)} keyboardType="decimal-pad" />
                 </View>
               </View>
@@ -310,7 +310,7 @@ export default function ProductDetailScreen() {
                   {i === 0 && <Text style={[styles.histCurrent, { color: theme.success }]}>Actual</Text>}
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={[styles.histGross, { color: theme.text }]}>Bruto: ${h.grossPrice.toFixed(2)}</Text>
+                  <Text style={[styles.histGross, { color: theme.text }]}>Venta: ${h.grossPrice.toFixed(2)}</Text>
                   <Text style={[styles.histNet, { color: theme.textSecondary }]}>Neto: ${h.netPrice.toFixed(2)}</Text>
                 </View>
               </View>

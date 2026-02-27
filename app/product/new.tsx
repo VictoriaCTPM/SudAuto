@@ -171,7 +171,7 @@ export default function NewProductScreen() {
               <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.netPrice} onChangeText={(v) => set('netPrice', v)} placeholder="0.00" placeholderTextColor={theme.placeholder} keyboardType="decimal-pad" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Precio bruto ($)</Text>
+              <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Precio de venta ($)</Text>
               <TextInput style={[styles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]} value={form.grossPrice} onChangeText={(v) => set('grossPrice', v)} placeholder="0.00" placeholderTextColor={theme.placeholder} keyboardType="decimal-pad" />
             </View>
           </View>

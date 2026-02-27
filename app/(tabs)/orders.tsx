@@ -153,7 +153,7 @@ function AddOrderModal({ visible, onClose, theme }: { visible: boolean; onClose:
     { key: 'brand', label: 'Marca', placeholder: 'Ingresa la marca', keyboardType: 'default' },
     { key: 'quantity', label: 'Cantidad', placeholder: '1', keyboardType: 'number-pad' },
     { key: 'expectedNetCost', label: 'Costo neto esperado ($)', placeholder: '0.00', keyboardType: 'decimal-pad' },
-    { key: 'expectedGrossCost', label: 'Costo bruto esperado ($)', placeholder: '0.00', keyboardType: 'decimal-pad' },
+    { key: 'expectedGrossCost', label: 'Precio de venta esperado ($)', placeholder: '0.00', keyboardType: 'decimal-pad' },
     { key: 'supplier', label: 'Proveedor', placeholder: 'Nombre del proveedor', keyboardType: 'default' },
     { key: 'expectedDelivery', label: 'Entrega esperada (AAAA-MM-DD)', placeholder: 'ej. 2026-04-15', keyboardType: 'default' },
     { key: 'notes', label: 'Notas', placeholder: 'Notas adicionales...', keyboardType: 'default' },

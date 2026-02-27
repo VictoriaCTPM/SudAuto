@@ -292,7 +292,7 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
             {[
               { label: 'Cantidad', value: qty, onChange: setQty, hint: `Máx: ${selected.quantity}` },
               { label: 'Precio neto venta', value: saleNet, onChange: setSaleNet, hint: `Compra: $${selected.netPrice.toFixed(2)}` },
-              { label: 'Precio bruto venta', value: saleGross, onChange: setSaleGross, hint: `Compra: $${selected.grossPrice.toFixed(2)}` },
+              { label: 'Precio de venta', value: saleGross, onChange: setSaleGross, hint: `Compra: $${selected.grossPrice.toFixed(2)}` },
             ].map((f) => (
               <View key={f.label}>
                 <View style={saleModalStyles.labelRow}>
@@ -523,7 +523,7 @@ export default function TodayScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsRow}>
           <StatCard label="Artículos vendidos" value={stats.items} icon="bag-outline" color={theme.accent} theme={theme} />
           <StatCard label="Ingreso neto" value={`$${stats.net.toFixed(2)}`} icon="arrow-up-circle-outline" color={theme.info} theme={theme} />
-          <StatCard label="Ingreso bruto" value={`$${stats.gross.toFixed(2)}`} icon="cash-outline" color={theme.success} theme={theme} />
+          <StatCard label="Ingreso por ventas" value={`$${stats.gross.toFixed(2)}`} icon="cash-outline" color={theme.success} theme={theme} />
           <StatCard label="Ganancia" value={`$${stats.profit.toFixed(2)}`} icon="trending-up-outline" color={stats.profit >= 0 ? theme.success : theme.danger} theme={theme} />
         </ScrollView>
       </View>
@@ -576,7 +576,7 @@ export default function TodayScreen() {
             {[
               { label: 'Artículos vendidos', value: reportModal.totalItemsSold },
               { label: 'Ingreso neto', value: `$${reportModal.totalNetRevenue.toFixed(2)}` },
-              { label: 'Ingreso bruto', value: `$${reportModal.totalGrossRevenue.toFixed(2)}` },
+              { label: 'Ingreso por ventas', value: `$${reportModal.totalGrossRevenue.toFixed(2)}` },
               { label: 'Ganancia', value: `$${reportModal.estimatedProfit.toFixed(2)}` },
               { label: 'Productos en stock', value: reportModal.stockSnapshot.totalProducts },
               { label: 'Valor del stock', value: `$${reportModal.stockSnapshot.totalValue.toFixed(2)}` },

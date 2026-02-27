@@ -37,7 +37,7 @@ function ReportHistoryItem({ report, theme }: { report: DailyReport; theme: any 
         <View style={[histStyles.details, { borderTopColor: theme.separator }]}>
           {[
             { label: 'Ingreso neto', value: `$${report.totalNetRevenue.toFixed(2)}` },
-            { label: 'Ingreso bruto', value: `$${report.totalGrossRevenue.toFixed(2)}` },
+            { label: 'Ingreso por ventas', value: `$${report.totalGrossRevenue.toFixed(2)}` },
             { label: 'Artículos vendidos', value: report.totalItemsSold },
             { label: 'Productos en stock', value: report.stockSnapshot.totalProducts },
             { label: 'Valor del stock', value: `$${report.stockSnapshot.totalValue.toFixed(2)}` },
