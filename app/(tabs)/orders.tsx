@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Pressable, useColorScheme,
   Platform, Alert, Modal, TextInput, ScrollView, KeyboardAvoidingView,
@@ -10,6 +10,7 @@ import Colors from '@/constants/colors';
 import { useInventory, Order } from '@/contexts/InventoryContext';
 import { useToast } from '@/components/Toast';
 import * as Haptics from 'expo-haptics';
+import { useVoiceInput } from '@/lib/voice';
 
 const STATUS_CONFIG = {
   ordered: { label: 'Pedido', color: '#38BDF8', icon: 'time-outline' as const },
@@ -67,6 +68,41 @@ function OrderCard({ order, theme, onConfirm, onDelete }: { order: Order; theme:
           <Ionicons name="trash-outline" size={14} color={theme.textTertiary} />
         </Pressable>
       )}
+    </View>
+  );
+}
+
+function VoiceField({ value, onChange, label, placeholder, keyboardType, theme }: {
+  value: string; onChange: (v: string) => void; label: string;
+  placeholder: string; keyboardType: string; theme: any;
+}) {
+  const isTextInput = keyboardType === 'default';
+  const voice = useVoiceInput(useCallback((text: string) => {
+    if (text) onChange(text);
+  }, [onChange]));
+
+  return (
+    <View>
+      <Text style={[modalStyles.label, { color: theme.textSecondary }]}>{label}</Text>
+      <View style={[modalStyles.inputRow, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
+        <TextInput
+          style={[modalStyles.inputFlex, { color: theme.text }]}
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={theme.placeholder}
+          keyboardType={keyboardType as any}
+        />
+        {isTextInput && (
+          <Pressable onPress={voice.toggle} hitSlop={8} style={modalStyles.micBtn}>
+            <Ionicons
+              name={voice.listening ? 'radio' : 'mic-outline'}
+              size={18}
+              color={voice.listening ? theme.danger : theme.textTertiary}
+            />
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -134,17 +170,15 @@ function AddOrderModal({ visible, onClose, theme }: { visible: boolean; onClose:
         </View>
         <ScrollView contentContainerStyle={modalStyles.form} keyboardShouldPersistTaps="handled">
           {fields.map((f) => (
-            <View key={f.key}>
-              <Text style={[modalStyles.label, { color: theme.textSecondary }]}>{f.label}</Text>
-              <TextInput
-                style={[modalStyles.input, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder, color: theme.text }]}
-                value={(form as any)[f.key]}
-                onChangeText={(v) => set(f.key, v)}
-                placeholder={f.placeholder}
-                placeholderTextColor={theme.placeholder}
-                keyboardType={f.keyboardType as any}
-              />
-            </View>
+            <VoiceField
+              key={f.key}
+              value={(form as any)[f.key]}
+              onChange={(v) => set(f.key, v)}
+              label={f.label}
+              placeholder={f.placeholder}
+              keyboardType={f.keyboardType}
+              theme={theme}
+            />
           ))}
           <Pressable
             onPress={handleSubmit}
@@ -164,7 +198,9 @@ const modalStyles = StyleSheet.create({
   title: { fontSize: 20, fontFamily: 'Inter_700Bold' },
   form: { padding: 20, gap: 14, paddingBottom: 60 },
   label: { fontSize: 13, fontFamily: 'Inter_500Medium', marginBottom: 6 },
-  input: { height: 48, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15, fontFamily: 'Inter_400Regular' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', height: 48, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14 },
+  inputFlex: { flex: 1, fontSize: 15, fontFamily: 'Inter_400Regular', height: '100%' },
+  micBtn: { padding: 4, marginLeft: 4 },
   btn: { height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   btnText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#0D1117' },
 });

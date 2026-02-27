@@ -3,14 +3,18 @@ import {
   View, Text, StyleSheet, FlatList, Pressable,
   useColorScheme, Platform, Alert, Modal,
   TextInput, ScrollView, KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { useInventory, Product, SaleRecord } from '@/contexts/InventoryContext';
 import { useToast } from '@/components/Toast';
 import * as Haptics from 'expo-haptics';
+import { runOCR } from '@/lib/ocr';
+import { useVoiceInput } from '@/lib/voice';
 
 function StatCard({ label, value, sub, color, icon, theme }: any) {
   return (
@@ -44,6 +48,11 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
   const [saleNet, setSaleNet] = useState('');
   const [saleGross, setSaleGross] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(false);
+
+  const voiceSearch = useVoiceInput(useCallback((text: string) => {
+    if (text) setSearch(text);
+  }, []));
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products.filter((p) => p.quantity > 0);
@@ -57,6 +66,100 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
     setSelected(p);
     setSaleNet(p.netPrice.toFixed(2));
     setSaleGross(p.grossPrice.toFixed(2));
+  };
+
+  const handleCameraScan = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('Se requiere acceso a la cámara', 'error');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.7,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]?.base64) return;
+
+    setOcrLoading(true);
+    try {
+      const ocr = await runOCR(result.assets[0].base64);
+      const searchTerms = [ocr.name, ocr.brand, ocr.barcode, ocr.serial].filter(Boolean);
+
+      let found: Product | null = null;
+      for (const term of searchTerms) {
+        if (!term) continue;
+        const t = term.toLowerCase();
+        const match = products.find(
+          (p) => p.quantity > 0 && (
+            p.barcode === term ||
+            p.serialNumber === term ||
+            p.name.toLowerCase().includes(t) ||
+            p.brand.toLowerCase().includes(t)
+          )
+        );
+        if (match) { found = match; break; }
+      }
+
+      if (found) {
+        handleSelect(found);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        showToast(`Producto encontrado: ${found.name}`, 'success');
+      } else {
+        setSearch(ocr.name || ocr.brand || '');
+        showToast('Producto no encontrado en stock. Busca manualmente.', 'info');
+      }
+    } catch {
+      showToast('Error al escanear etiqueta', 'error');
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const handleGalleryScan = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('Se requiere acceso a la galería', 'error');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      quality: 0.7,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]?.base64) return;
+
+    setOcrLoading(true);
+    try {
+      const ocr = await runOCR(result.assets[0].base64);
+      const searchTerms = [ocr.name, ocr.brand, ocr.barcode, ocr.serial].filter(Boolean);
+
+      let found: Product | null = null;
+      for (const term of searchTerms) {
+        if (!term) continue;
+        const t = term.toLowerCase();
+        const match = products.find(
+          (p) => p.quantity > 0 && (
+            p.barcode === term ||
+            p.serialNumber === term ||
+            p.name.toLowerCase().includes(t) ||
+            p.brand.toLowerCase().includes(t)
+          )
+        );
+        if (match) { found = match; break; }
+      }
+
+      if (found) {
+        handleSelect(found);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        showToast(`Producto encontrado: ${found.name}`, 'success');
+      } else {
+        setSearch(ocr.name || ocr.brand || '');
+        showToast('Producto no encontrado en stock. Busca manualmente.', 'info');
+      }
+    } catch {
+      showToast('Error al escanear etiqueta', 'error');
+    } finally {
+      setOcrLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -103,8 +206,30 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
           </Pressable>
         </View>
 
-        {!selected ? (
+        {ocrLoading ? (
+          <View style={saleModalStyles.ocrLoadingWrap}>
+            <ActivityIndicator size="large" color={theme.accent} />
+            <Text style={[saleModalStyles.ocrLoadingText, { color: theme.textSecondary }]}>Analizando etiqueta...</Text>
+          </View>
+        ) : !selected ? (
           <>
+            <View style={saleModalStyles.scanActions}>
+              <Pressable
+                onPress={handleCameraScan}
+                style={[saleModalStyles.scanBtn, { backgroundColor: theme.accent + '18', borderColor: theme.accent }]}
+              >
+                <Ionicons name="camera" size={20} color={theme.accent} />
+                <Text style={[saleModalStyles.scanBtnText, { color: theme.accent }]}>Cámara</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleGalleryScan}
+                style={[saleModalStyles.scanBtn, { backgroundColor: theme.info + '18', borderColor: theme.info }]}
+              >
+                <Ionicons name="image" size={20} color={theme.info} />
+                <Text style={[saleModalStyles.scanBtnText, { color: theme.info }]}>Galería</Text>
+              </Pressable>
+            </View>
+
             <View style={[saleModalStyles.searchWrap, { backgroundColor: theme.backgroundTertiary, borderColor: theme.cardBorder }]}>
               <Ionicons name="search" size={16} color={theme.textTertiary} />
               <TextInput
@@ -115,6 +240,13 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
                 placeholderTextColor={theme.placeholder}
                 autoFocus
               />
+              <Pressable onPress={voiceSearch.toggle} hitSlop={8}>
+                <Ionicons
+                  name={voiceSearch.listening ? 'radio' : 'mic-outline'}
+                  size={20}
+                  color={voiceSearch.listening ? theme.danger : theme.textTertiary}
+                />
+              </Pressable>
             </View>
             <FlatList
               data={filteredProducts}
@@ -203,6 +335,11 @@ function AddSaleModal({ visible, onClose, theme }: { visible: boolean; onClose: 
 const saleModalStyles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
   title: { fontSize: 20, fontFamily: 'Inter_700Bold' },
+  scanActions: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
+  scanBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 12, borderWidth: 1 },
+  scanBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  ocrLoadingWrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 16 },
+  ocrLoadingText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
   searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular' },
   list: { paddingHorizontal: 16, gap: 8, paddingBottom: 40 },
@@ -478,16 +615,16 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 60, gap: 10 },
   emptyTitle: { fontSize: 17, fontFamily: 'Inter_600SemiBold' },
   emptyText: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', paddingHorizontal: 40 },
-  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 },
-  startCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 16 },
-  startIcon: { width: 120, height: 120, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
-  startTitle: { fontSize: 26, fontFamily: 'Inter_700Bold', textAlign: 'center' },
-  startSub: { fontSize: 15, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
-  lowAlert: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
+  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  startCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, gap: 16 },
+  startIcon: { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center' },
+  startTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', textAlign: 'center' },
+  startSub: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20 },
+  startBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 28, paddingVertical: 16, borderRadius: 16, marginTop: 8 },
+  startBtnText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#0D1117' },
+  lowAlert: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
   lowAlertText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
-  startBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 54, borderRadius: 16, paddingHorizontal: 32 },
-  startBtnText: { fontSize: 17, fontFamily: 'Inter_600SemiBold', color: '#0D1117' },
-  reportRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
-  reportLabel: { fontSize: 15, fontFamily: 'Inter_400Regular' },
+  reportRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1 },
+  reportLabel: { fontSize: 14, fontFamily: 'Inter_400Regular' },
   reportValue: { fontSize: 16, fontFamily: 'Inter_700Bold' },
 });

@@ -48,8 +48,8 @@ components/
 2. **Gestión de inventario** — CRUD, búsqueda, filtros por categoría, alertas de stock bajo, historial de precios, eliminación masiva
 3. **Escáner de código de barras** — Escaneo en tiempo real vía expo-camera
 4. **OCR** — Gemini AI extrae 5 campos de etiquetas: nombre, marca, serie, código de barras, precio (vía endpoint POST /api/ocr)
-5. **Jornada / Ventas** — Iniciar/finalizar día, registrar ventas, panel de P&L en tiempo real
-6. **Pedidos** — Rastrear stock entrante, confirmar recepción (actualiza inventario automáticamente)
+5. **Jornada / Ventas** — Iniciar/finalizar día, registrar ventas, cámara OCR para buscar producto en stock, entrada de voz en búsqueda
+6. **Pedidos** — Rastrear stock entrante, confirmar recepción, entrada de voz en formulario de pedido
 7. **Informes** — Gráficos semanales/mensuales de ingresos, productos más vendidos, historial de reportes diarios
 
 ## Categories (Spanish, for ferreterías/refaccionarias)
