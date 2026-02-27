@@ -13,6 +13,7 @@ import Colors from '@/constants/colors';
 import { useInventory, Product, SaleRecord } from '@/contexts/InventoryContext';
 import { useToast } from '@/components/Toast';
 import * as Haptics from 'expo-haptics';
+import { exportSalesToExcel } from '@/lib/exportExcel';
 import { runOCR } from '@/lib/ocr';
 import { useVoiceInput } from '@/lib/voice';
 
@@ -510,6 +511,27 @@ export default function TodayScreen() {
               <Text style={[styles.activeText, { color: theme.success }]}>Activo</Text>
             </View>
             <Pressable
+              onPress={async () => {
+                if (daySales.length === 0) { showToast('No hay ventas para exportar', 'info'); return; }
+                try {
+                  await exportSalesToExcel(daySales.map((s) => ({
+                    productName: s.productName,
+                    productBrand: s.productBrand || '',
+                    quantity: s.quantity,
+                    saleNetPrice: s.saleNetPrice,
+                    saleGrossPrice: s.saleGrossPrice,
+                    purchaseNetPrice: s.purchaseNetPrice,
+                    purchaseGrossPrice: s.purchaseGrossPrice,
+                    soldAt: s.soldAt,
+                  })));
+                  showToast('Ventas exportadas a Excel', 'success');
+                } catch { showToast('Error al exportar', 'error'); }
+              }}
+              style={[styles.iconBtn, { backgroundColor: theme.success + '22' }]}
+            >
+              <Ionicons name="download-outline" size={18} color={theme.success} />
+            </Pressable>
+            <Pressable
               onPress={handleEnd}
               disabled={ending}
               style={[styles.endBtn, { borderColor: theme.danger }]}
@@ -606,6 +628,7 @@ const styles = StyleSheet.create({
   activeBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   activeDot: { width: 6, height: 6, borderRadius: 3 },
   activeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  iconBtn: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   endBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
   endText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   statsRow: { gap: 8, paddingRight: 8 },

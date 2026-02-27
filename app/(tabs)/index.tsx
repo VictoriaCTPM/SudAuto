@@ -11,6 +11,7 @@ import Colors from '@/constants/colors';
 import { useInventory, Product } from '@/contexts/InventoryContext';
 import { useToast } from '@/components/Toast';
 import * as Haptics from 'expo-haptics';
+import { exportInventoryToExcel } from '@/lib/exportExcel';
 
 const FILTERS = ['Todos', 'Stock bajo', ...[] as string[]];
 
@@ -159,6 +160,18 @@ export default function StockScreen() {
                 <Ionicons name="trash" size={20} color={theme.danger} />
               </Pressable>
             )}
+            <Pressable
+              onPress={async () => {
+                if (products.length === 0) { showToast('No hay productos para exportar', 'info'); return; }
+                try {
+                  await exportInventoryToExcel(products);
+                  showToast('Inventario exportado a Excel', 'success');
+                } catch { showToast('Error al exportar', 'error'); }
+              }}
+              style={[styles.iconBtn, { backgroundColor: theme.success + '22' }]}
+            >
+              <Ionicons name="download-outline" size={20} color={theme.success} />
+            </Pressable>
             <Pressable
               onPress={() => router.push('/product/new')}
               style={[styles.addBtn, { backgroundColor: theme.accent }]}
