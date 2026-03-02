@@ -1,7 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 
 function getAIClient() {
-  const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+  const apiKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
   if (!apiKey) return null;
   const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
   if (baseUrl) {
@@ -52,7 +54,7 @@ export default async function handler(req: any, res: any) {
   try {
     const ai = getAIClient();
     if (!ai) {
-      return res.status(503).json({ error: "OCR service not configured" });
+      return res.status(503).json({ error: "OCR service not configured: set GEMINI_API_KEY in environment variables" });
     }
 
     const { base64 } = req.body;
