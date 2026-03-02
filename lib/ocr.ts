@@ -1,6 +1,6 @@
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : 'http://localhost:5000';
+  : typeof window !== 'undefined' ? '' : 'http://localhost:5000';
 
 export interface OCRFields {
   name: string;
