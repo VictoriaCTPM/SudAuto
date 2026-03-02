@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : 'http://localhost:5000';
+  : typeof window !== 'undefined' ? '' : 'http://localhost:5000';
 
 export function useVoiceInput(onResult: (text: string) => void) {
   const [listening, setListening] = useState(false);
