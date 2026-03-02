@@ -2,12 +2,12 @@ import { GoogleGenAI } from "@google/genai";
 
 function getAIClient() {
   const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+  if (!apiKey) return null;
   const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
-  if (!apiKey || !baseUrl) return null;
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: { apiVersion: "", baseUrl },
-  });
+  if (baseUrl) {
+    return new GoogleGenAI({ apiKey, httpOptions: { apiVersion: "", baseUrl } });
+  }
+  return new GoogleGenAI({ apiKey });
 }
 
 function detectMimeType(base64: string): { mimeType: string; data: string } {
